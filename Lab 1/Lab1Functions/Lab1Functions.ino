@@ -1,13 +1,4 @@
-/*
-  NOTE:
-   THIS IS THE STANDARD FOR HOW TO PROPERLY COMMENT CODE
-   Header comment has program, name, author name, date created
-   Header comment has brief description of what program does
-   Header comment has list of key functions and variables created with decription
-   There are sufficient in line and block comments in the body of the program
-   Variables and functions have logical, intuitive names
-   Functions are used to improve modularity, clarity, and readability
-***********************************
+/************************************
   Arbib-Lab01.ino
   Peter Garnache 12/05/19
 
@@ -37,21 +28,29 @@
 #include <MultiStepper.h>   //include multiple stepper motor library
 
 //define pin numbers
-const int rtStepPin = 44; //right stepper motor step pin 
-const int rtDirPin = 49;  //right stepper motor direction pin
-const int ltStepPin = 46; //left stepper motor step pin
-const int ltDirPin = 53;  //left stepper motor direction pin
+const int rtStepPin = 44;         //right stepper motor step pin 
+const int rtDirPin = 49;          //right stepper motor direction pin
+const int ltStepPin = 46;         //left stepper motor step pin
+const int ltDirPin = 53;          //left stepper motor direction pin
+const int spr = 800;              //stepper steps per revolution of the wheel
+const double d = 3.365;           //diameter of the wheel in inches
+const double w = 8.25;            //distance between centers of wheels in inches
+const double dstStep = PI*d/spr;  //linear distance of one wheel step
+const double FFL = 1.01;          //fudge factor for the robot's left wheel
+const double FFR = 1.01;          //fudge factor for the robot's right wheel
 
-AccelStepper stepperRight(AccelStepper::DRIVER, rtStepPin, rtDirPin);   //create instance of right stepper motor object (2 driver pins, low to high transition step pin 52, direction input pin 53 (high means forward)
-AccelStepper stepperLeft(AccelStepper::DRIVER, ltStepPin, ltDirPin);    //create instance of left stepper motor object (2 driver pins, step pin 50, direction input pin 51)
+AccelStepper stepperLeft(AccelStepper::DRIVER, rtStepPin, rtDirPin);    //create instance of right stepper motor object (2 driver pins, low to high transition step pin 52, direction input pin 53 (high means forward)
+AccelStepper stepperRight(AccelStepper::DRIVER, ltStepPin, ltDirPin);   //create instance of left stepper motor object (2 driver pins, step pin 50, direction input pin 51)
 MultiStepper steppers;                                                  //create instance to control multiple steppers at the same time
 
 #define stepperEnable 48    //stepper enable pin on stepStick 
 #define redLED 5            //red LED for displaying states
-#define grnLED 6            //green LED for displaying states
-#define ylwLED 7            //yellow LED for displaying states
+#define ylwLED 6            //green LED for displaying states
+#define grnLED 7            //yellow LED for displaying states
 #define stepperEnTrue false //variable for enabling stepper motor
 #define stepperEnFalse true //variable for disabling stepper motor
+#define speedD 1000         //default speed
+#define accelD 200          //default acceleration
 
 #define pauseTime 2500 //time before robot moves
 
@@ -72,19 +71,30 @@ void setup()
   pinMode(ylwLED, OUTPUT);                        //set yellow LED as output
 
   // Stepper initialization
-  stepperRight.setMaxSpeed(1500);               //set the maximum speed for the right stepper
-  stepperLeft.setMaxSpeed(1500);                //set the maximum speed for the left stepper
-  stepperRight.setAcceleration(3000);           //set the initial acceleration for the right stepper
-  stepperLeft.setAcceleration(3000);            //set the initial acceleration for the right stepper
+  resetVals();                                  //reset the max speed and acceleration values for each stepper
   steppers.addStepper(stepperRight);            //add right motor to MultiStepper steppers
   steppers.addStepper(stepperLeft);             //add left motor to MultiStepper steppers
   digitalWrite(stepperEnable, stepperEnTrue);   //turns on the stepper motor driver
-  delay(pauseTime);                             //Delay before the robot moves
+  delay(pauseTime);                             //delay before the robot moves
 }
 
 void loop()
 {
-  
+  moveSquare('L', 6, 18);
+  delay(5000);
+  /*
+   * Example code showing the proper calls for each function
+  forward(dist, spd);
+  reverse(dist, spd);
+  spin(dir, angle, spd);
+  pivot(dir, angle, spd);
+  turn(dir, angle, spd, r);
+  moveCircle(dir, spd, r);
+  moveFigure8(dir, spd, r);
+  moveSquare(dir, spd, l);
+  goToAngle(spd, angle);
+  goToGoal(spd, x, y);
+  */
 }
 
 
@@ -106,7 +116,26 @@ void loop()
   run based on the “dir” variable.
 */
 void pivot(char dir, int theta, int spd) {
-  
+  double dist;  //the distance that the robot should mobe in inches
+  int zL,zR;    //a set of variables that only let one wheel spin
+  if(dir == 'L') {
+    zL = 1;   //left wheel spins
+    zR = 0;   //right wheel does not spin
+  }
+  else {
+    zL = 0;   //left wheel does not spin
+    zR = 1;   //right wheel spins
+  }
+  dist = theta*PI/180.0*w;        //calculate the distance the robot should move, in inches
+  int spdL = convertStpL(spd);    //convert speeds from input to steps/sec
+  int spdR = convertStpR(spd);    //convert speeds from input to steps/sec
+  int distL = convertStpL(dist);  //convert distances from inches to steps
+  int distR = convertStpR(dist);  //convert distances from inches to steps
+  stepperLeft.move(zL*distL);     //set stepper distance
+  stepperRight.move(zR*distR);    //set stepper distance
+  stepperLeft.setMaxSpeed(spdL);  //set stepper speed
+  stepperRight.setMaxSpeed(spdR); //set stepper speed
+  runToStop();                    //move to the desired position
 }
 
 
@@ -129,7 +158,22 @@ void pivot(char dir, int theta, int spd) {
   to move. 
 */
 void spin(char dir, int theta, int spd) {
-  
+  double dist;  //the distance that the robot should mobe in inches
+  int neg;      //the direction the right wheel should move
+  if(dir == 'L')
+    neg = 1;    //move left
+  else
+    neg = -1;   //move right
+  dist = theta*PI/180.0*w/2.0;    //
+  int spdL = convertStpL(spd);    //convert speeds from input to steps/sec
+  int spdR = convertStpR(spd);    //convert speeds from input to steps/sec
+  int distL = convertStpL(dist);  //convert distances from inches to steps
+  int distR = convertStpR(dist);  //convert distances from inches to steps
+  stepperLeft.move(-neg*distL);   //set stepper distance
+  stepperRight.move(neg*distR);   //set stepper distance
+  stepperLeft.setMaxSpeed(spdL);  //set stepper speed
+  stepperRight.setMaxSpeed(spdR); //set stepper speed
+  runToStop();                    //move to the desired position
 }
 
 
@@ -159,8 +203,23 @@ void spin(char dir, int theta, int spd) {
   on each side to complete the turn.
 
 */
-void turn(char dir, int theta, int spd) {
-  
+void turn(char dir, int theta, int spd, int r) {
+  long positions[2];                          //create a positions vector for each stepper
+  stepperLeft.setCurrentPosition(0);          //reset the stepper position
+  stepperRight.setCurrentPosition(0);         //reset the steper position
+  stepperLeft.setMaxSpeed(convertStpL(spd));  //set stepper max speeds
+  stepperRight.setMaxSpeed(convertStpL(spd)); //set stepper max speeds
+  if(dir == 'L'){
+    positions[0] = convertStpL(theta * PI/180.0*(r + w/2.0)); //set the left stepper target position
+    positions[1] = convertStpR(theta * PI/180.0*(r - w/2.0)); //set the right stepper target position
+  }
+  else {
+    positions[0] = convertStpL(theta * PI/180.0*(r - w/2.0)); //set the left stepper target position
+    positions[1] = convertStpR(theta * PI/180.0*(r + w/2.0)); //set the right stepper target position
+  }
+  steppers.moveTo(positions);     //set each stepper's position
+  steppers.runSpeedToPosition();  //move stepers to position at constant speed
+
 }
 
 
@@ -178,7 +237,15 @@ void turn(char dir, int theta, int spd) {
   wheel skid during the start and end of movement. 
 */
 void forward(int dist, int spd) {
-  
+  int spdL = convertStpL(spd);    //convert speeds from input to steps/sec
+  int spdR = convertStpR(spd);    //convert speeds from input to steps/sec
+  int distL = convertStpL(dist);  //convert distances from inches to steps
+  int distR = convertStpR(dist);  //convert distances from inches to steps
+  stepperLeft.move(distL);        //set stepper distance
+  stepperRight.move(distR);       //set stepper distance
+  stepperLeft.setMaxSpeed(spdL);  //set stepper speed
+  stepperRight.setMaxSpeed(spdR); //set stepper speed
+  runToStop();                    //move to the desired position
 }
 
 
@@ -196,7 +263,15 @@ void forward(int dist, int spd) {
   skid during the start and end of movement. 
 */
 void reverse(int dist, int spd) {
-  
+  int spdL = convertStpL(spd);    //convert speeds from input to steps/sec
+  int spdR = convertStpR(spd);    //convert speeds from input to steps/sec
+  int distL = convertStpL(dist);  //convert distances from inches to steps
+  int distR = convertStpR(dist);  //convert distances from inches to steps
+  stepperLeft.move(-distL);       //set stepper distance
+  stepperRight.move(-distR);      //set stepper distance
+  stepperLeft.setMaxSpeed(spdR);  //set stepper speed
+  stepperRight.setMaxSpeed(spdL); //set stepper speed
+  runToStop();                    //move to the desired position
 }
 
 
@@ -205,9 +280,9 @@ void reverse(int dist, int spd) {
 
   Stop calls the function left.stop() and right.stop() in order to stop the robot.
 */
-void stop() {
-  stepperLeft.stop();
-  stepperRight.stop();
+void Stop() {
+  stepperLeft.stop();   //stop steppers
+  stepperRight.stop();  //stop steppers
 }
 
 
@@ -225,7 +300,9 @@ void stop() {
 
 */
 void moveCircle(char dir, int spd, int r) {
-  
+  setLED("R");              //set red LED
+  turn(dir, 360, spd, r);   //turn in a circle with dir = dir, for 360 degrees, at spd = spd, and r = r
+  resetLED();               //reset leds after movement
 }
 
 
@@ -246,5 +323,165 @@ void moveCircle(char dir, int spd, int r) {
   moveCircle(R, spd, r);
 */
 void moveFigure8(char dir, int spd, int r) {
-  
+  setLED("RY");               //turn on red and yellow LEDs
+  if(dir=='L'){
+    turn('L', 360, spd, r);   //turn left 360 deg
+    delay(100);
+    turn('R', 360, spd, r);   //turn right 360 deg
+  }
+  else{
+    turn('R', 360, spd, r);   //turn right 360 deg
+    delay(100);
+    turn('L', 360, spd, r);   //turn left 360 deg
+  }
+  resetLED();                 //reset LEDs
+} 
+
+
+/*
+  moveSquare takes 3 inputs; a character representation of the direction of the initial turn,
+  an integer for the speed that the turn and movements should be completed at, and a value for
+  the length for the sides of the square in inches.
+
+  dir has a value of either ‘L’ or ‘R’ 
+  spd is a value from 100 to 1000 in steps/sec
+  l is a value from 0 to 100 in inches
+
+  In a for loop that iterates 4 times, the forward function is called with the inputted length
+  and speed and then the pivot function is called to turn 90 degrees using the inputted speed
+  and direction.
+
+ */
+void moveSquare(char dir, int spd, int l) {
+  setLED("RYG");    //turn on the red, yellow, and green LEDs
+  for(int i = 0 ; i < 4; i++) {
+    forward(l, spd);      //move forward for the length of the square
+    spin(dir, 90, spd);   //spin 90 degrees in the indicated direction
+  }
+  resetLED();             //reset the LEDs
+}
+
+
+/*
+  goToAngle takes 2 inputs; an integer for the speed that the turn should be completed at, and
+  a value for the angle the robot will spin to.
+
+  spd is the speed of the robot ranging from 100 to 1000 in steps/sec
+  theta is the angle that the robot should move to
+
+  This function just calls the spin command and makes the robot end at a specific angle
+  relative to the original direction the robot was facing before the function was called
+
+ */
+void goToAngle(int spd, int theta) {
+  setLED("G");            //turn on the green led
+  spin('L', theta, spd);  //spin to the input angle
+  resetLED();             //reset the leds
+}
+
+
+/*
+  goToGoal takes 3 inputs; an integer for the speed that the movement should be completed at,
+  and a x and y position for the robot to go to.
+
+  spd is the speed of the robot ranging from 100 to 1000 in steps/sec
+  l is a value from 0 to 100 in inches
+
+  This function uses atan2(x, y) to find the angle required to position the robot pointed
+  towards the goal. The robot then uses the spin command to rotate to that angle. The robot
+  uses the Pythagorean theorem to calculate the distance it should travel to end at the goal.
+  It then moves forward to that position. 
+
+ */
+void goToGoal(int spd, double x, double y) {
+  setLED("GY");                           //turn on the green and yellow LEDs
+  double theta = atan2(y, x) * 180.0/PI;  //calculate the angle to move to
+  goToAngle(spd, theta);                  //go to the angle
+  setLED("GY");                           //turn on the green and yellow LEDs
+  double dist = sqrt(sq(x) + sq(y));      //calculate the distance to go to
+  forward(dist, spd);                     //move forward the distance
+  resetLED();                             //reset the leds
+}
+
+
+/*
+  runToStop runs both the right and left stepper until they stop moving
+ */
+void runToStop ( void ) {
+  int runL = 1;   //state variabels
+  int runR = 1;   //state variables
+  while (runL || runR) {        //until both stop
+    if (!stepperRight.run()) {  //step the right stepper, if it is done moving set runR = 0
+      runR = 0;                 //left done moving
+    }
+    if (!stepperLeft.run()) {   //step the left stepper, if it is done moving set runL = 0
+      runL = 0;                 //right done moving
+    }
+  }
+}
+
+
+/*
+  convert a value from inches/XX to steps/XX for the left wheel
+
+  val is a value with units of inches/XX
+ */
+int convertStpL (double val) {
+  int ans;      //temp variable
+  ans = (int) ceil(val/dstStep*FFL);  //conversion factor
+  return ans;   //return ans
+}
+
+
+/*
+  convert a value from inches/XX to steps/XX or the right wheel
+
+  val is a value with units of inches/XX
+ */
+int convertStpR (double val) {
+  int ans;      //temp variable
+  ans = (int) ceil(val/dstStep*FFR);  //conversion factor
+  return ans;   //return ans
+}
+
+
+/*
+  setLED recieves a string including the characters of LEDs that should be turned on.
+  Characters include
+  'R' --- Red LED
+  'Y' --- Yellow LED
+  'G' --- Green LED
+ */
+void setLED(String led){
+  resetLED();                   //reset the LEDs
+  if(led.indexOf('R') >= 0){    //if the string input contains the character 'R'
+    digitalWrite(redLED, HIGH); //set the red LED to HIGH
+  }
+  if(led.indexOf('Y') >= 0){    //if the string input contains the character 'Y'
+    digitalWrite(ylwLED, HIGH); //set the yellow LED to HIGH
+  }
+  if(led.indexOf('G') >= 0){    //if the string input contains the character 'G'
+    digitalWrite(grnLED, HIGH); //set the green LED to HIGH
+  }
+}
+
+
+/*
+  resetLED turns all three leds to the LOW state.
+ */
+void resetLED(void){
+  digitalWrite(redLED, LOW);  //reset the red LED
+  digitalWrite(ylwLED, LOW);  //reset the yellow LED
+  digitalWrite(grnLED, LOW);  //reset the green LED
+}
+
+
+/*
+  resetVals resets the acceleration and maxSpeed values for each stepper motor
+ */
+void resetVals() {
+  stepperRight.setMaxSpeed(speedD);               //set the maximum speed for the right stepper
+  stepperLeft.setMaxSpeed(speedD);                //set the maximum speed for the left stepper
+  stepperRight.setAcceleration(accelD);           //set the initial acceleration for the right stepper
+  stepperLeft.setAcceleration(accelD);            //set the initial acceleration for the right stepper
 }

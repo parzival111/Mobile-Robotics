@@ -88,14 +88,14 @@ void setup() {
   pinMode(ltStepPin, OUTPUT);         //sets left stepper pin as output
   pinMode(ltDirPin, OUTPUT);          //sets left stepper director pin as output
   pinMode(stepperEnable, OUTPUT);     //sets stepper enable pin as output
-  digitalWrite(stepperEnable, stepperEnFalse);//turns off the stepper motor driver
+  digitalWrite(stepperEnable, stepperEnFalse); //turns off the stepper motor driver
   pinMode(enableLED, OUTPUT);         //sets pin 13 enable LED on microcontroller as output
   digitalWrite(enableLED, LOW);       //turn off enable LED
   stepperRight.setMaxSpeed(1500);     //set the maximum permitted speed limited by processor and clock speed, no greater than 4000 steps/sec on Arduino
-  stepperRight.setAcceleration(10000);//set desired acceleration in steps/s^2
+  stepperRight.setAcceleration(1000); //set desired acceleration in steps/s^2
   stepperLeft.setMaxSpeed(1500);      //set the maximum permitted speed limited by processor and clock speed, no greater than 4000 steps/sec on Arduino
-  stepperLeft.setAcceleration(10000); //set desired acceleration in steps/s^2
-  digitalWrite(stepperEnable, stepperEnTrue);//turns on the stepper motor driver
+  stepperLeft.setAcceleration(1000);  //set desired acceleration in steps/s^2
+  digitalWrite(stepperEnable, stepperEnTrue); //turns on the stepper motor driver
   digitalWrite(enableLED, HIGH);      //turn on enable LED
   attachInterrupt(digitalPinToInterrupt(ltEncoder), LwheelSpeed, CHANGE);    //init the interrupt mode for the digital pin 2
   attachInterrupt(digitalPinToInterrupt(rtEncoder), RwheelSpeed, CHANGE);   //init the interrupt mode for the digital pin 3
@@ -105,7 +105,7 @@ void setup() {
 
 //the loop funciton runs continuously to move the robot wheels and count encoder ticks
 void loop() {
-  move1(FWD, qua_rot);            //move the robot wheels
+  move1(FWD, two_rot);            //move the robot wheels
   print_data();                   //prints encoder data
   delay(wait_time);               //wait to move robot
 }
