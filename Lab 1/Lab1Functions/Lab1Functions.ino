@@ -80,8 +80,9 @@ void setup()
 
 void loop()
 {
-  moveSquare('L', 6, 18);
-  delay(5000);
+pivot('R',90, 1000);
+  delay(1000);
+  
   /*
    * Example code showing the proper calls for each function
   forward(dist, spd);
@@ -130,6 +131,7 @@ void pivot(char dir, int theta, int spd) {
   int spdL = convertStpL(spd);    //convert speeds from input to steps/sec
   int spdR = convertStpR(spd);    //convert speeds from input to steps/sec
   int distL = convertStpL(dist);  //convert distances from inches to steps
+      Serial.print(distL);
   int distR = convertStpR(dist);  //convert distances from inches to steps
   stepperLeft.move(zL*distL);     //set stepper distance
   stepperRight.move(zR*distR);    //set stepper distance
@@ -165,6 +167,7 @@ void spin(char dir, int theta, int spd) {
   else
     neg = -1;   //move right
   dist = theta*PI/180.0*w/2.0;    //
+
   int spdL = convertStpL(spd);    //convert speeds from input to steps/sec
   int spdR = convertStpR(spd);    //convert speeds from input to steps/sec
   int distL = convertStpL(dist);  //convert distances from inches to steps
