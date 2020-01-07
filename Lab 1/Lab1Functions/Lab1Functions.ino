@@ -7,10 +7,19 @@
   moveCircle - Move the robot in a complete circle with a specified radius
   moveFigure8 - Move the robot in a figure eight pattern with a specified radius
   forward, reverse - Move the robot a specified distance either forward or backward
-  pivot- Turn the robot with the axis of rotation being one of the wheels
+  pivot - Turn the robot with the axis of rotation being one of the wheels
   spin - Turn the robot with the axis of rotation being between the two wheels
   turn - Turn the robot at a variable radius where both wheels move
   stop - Stop the robot in place during a move
+  
+  Additional functions created are
+  runToStop - This function moves both steppers to their target position using the run() command
+  convertStpL - This function converts inches to steps for the left wheel
+  convertStpR - This function converts inches to steps for the right wheel
+  resetVals - This function resets the acceleration and speed values
+  resetLED - This function resets the LEDs on the robot
+  setLED - This function sets the LED configuration on the robot. 
+  
   
   Hardware Connections:
   digital pin 48 - enable PIN on A4988 Stepper Motor Driver StepSTICK
