@@ -2,9 +2,9 @@
   Arbib-Lab01.ino
   Peter Garnache 12/05/19
 
-  This program demonstrates several AI behaviors regarding obstacle avoidance. 
-  
-  
+  This program demonstrates several AI behaviors regarding obstacle avoidance.
+
+
   Hardware Connections:
   digital pin 48 - enable PIN on A4988 Stepper Motor Driver StepSTICK
   digital pin 44 - right stepper motor step pin
@@ -23,15 +23,15 @@
 
   analog pin 5 - Right Sonar Sensor
   analog pin 6 - Left Sonar Sensor
-  
+
 */
 
 #include <AccelStepper.h>   //include the stepper motor library
 #include <MultiStepper.h>   //include multiple stepper motor library
-#include <NewPing.h>        //include sonar ping library
+//#include <NewPing.h>        //include sonar ping library
 
 //define pin numbers
-const int rtStepPin = 44;         //right stepper motor step pin 
+const int rtStepPin = 44;         //right stepper motor step pin
 const int rtDirPin = 49;          //right stepper motor direction pin
 const int ltStepPin = 46;         //left stepper motor step pin
 const int ltDirPin = 53;          //left stepper motor direction pin
@@ -40,19 +40,28 @@ const int sPinL = A8;             //left sonar pin
 const int sPinR = A9;             //right sonar pin
 const double d = 3.365;           //diameter of the wheel in inches
 const double w = 8.25;            //distance between centers of wheels in inches
-const double dstStep = PI*d/spr;  //linear distance of one wheel step
-int thresh = 10;                  //threshold for stopping (inches)
-int numStep = 5;                  //Run the robot constantly for some value steps
-int isStop = 0;                   //variable for whether the robot is stopped.
-int cutoff = 15;
+const double dstStep = PI * d / spr; //linear distance of one wheel step
+const int thresh = 10;            //threshold for stopping (inches)
+const int numStep = 5;            //Run the robot constantly for some value steps
+const int isStop = 0;             //variable for whether the robot is stopped.
+const int cutoff = 15;
+const int dSpd = 4;               //default speed for movement
+const int turn = 45;              //default step movement distance for turns
+const int straight = 2;           //default movement distance for going forward
+int xPos = 0;                     //x position of the robot
+int yPos = 0;                     //y position of the robot
+double angle = 0;                 //heading of the robot
+int xGoal = 0;                    //x coordinate of the goal
+int yGoal = 0;                    //y coordinate of the goal
+
 
 AccelStepper stepperLeft(AccelStepper::DRIVER, rtStepPin, rtDirPin);    //create instance of right stepper motor object (2 driver pins, low to high transition step pin 52, direction input pin 53 (high means forward)
 AccelStepper stepperRight(AccelStepper::DRIVER, ltStepPin, ltDirPin);   //create instance of left stepper motor object (2 driver pins, step pin 50, direction input pin 51)
 MultiStepper steppers;                                                  //create instance to control multiple steppers at the same time
 
 // Sonar setup
-NewPing sonarL(sPinL, sPinL, 200);            //setup left sonar
-NewPing sonarR(sPinR, sPinR, 200);            //setup right sonar
+//NewPing sonarL(sPinL, sPinL, 200);            //setup left sonar
+//NewPing sonarR(sPinR, sPinR, 200);            //setup right sonar
 
 #define stepperEnable 48    //stepper enable pin on stepStick 
 #define redLED 5            //red LED for displaying states
@@ -86,7 +95,7 @@ void setup()
   pinMode(redLED, OUTPUT);                        //set red LED as output
   pinMode(grnLED, OUTPUT);                        //set green LED as output
   pinMode(ylwLED, OUTPUT);                        //set yellow LED as output
-  
+
   // Stepper initialization
   stepperRight.setMaxSpeed(speedD);               //set the maximum speed for the right stepper
   stepperLeft.setMaxSpeed(speedD);                //set the maximum speed for the left stepper
@@ -107,40 +116,40 @@ void loop()
 }
 
 /*
- * 
- * 
- */
-void angryKid(int dir){
+
+
+*/
+void angryKid(int dir) {
 
   double front = readIRFront();
   double back = readIRBack();
-  if( front < thresh || back < thresh){
+  if ( front < thresh || back < thresh) {
     setLED("R");
     stepperLeft.stop();
     stepperRight.stop();
-    if(isStop == 0){
+    if (isStop == 0) {
       isStop = 1;
       stepperLeft.setCurrentPosition(0);
       stepperRight.setCurrentPosition(0);
     }
   }
-  else{
+  else {
     setLED("G");
     isStop = 0;
-    if(!stepperLeft.runSpeed())
-    stepperLeft.move(dir*80000);
-    if(!stepperRight.runSpeed())
-    stepperRight.move(dir*80000);
+    if (!stepperLeft.runSpeed())
+      stepperLeft.move(dir * 80000);
+    if (!stepperRight.runSpeed())
+      stepperRight.move(dir * 80000);
   }
   resetLED();
 }
 
 
 /*
- * 
- * 
- */
-void shyKid(){
+
+
+*/
+void shyKid() {
   //Create the vector of nearby things to move away from
   double Fr = readIRFront();
   double Ba = readIRBack();
@@ -150,45 +159,46 @@ void shyKid(){
   boolean L = Le < thresh;
   boolean B = Ba < thresh;
   boolean F = Fr < thresh;
-  
+
   // Do not move case, see nothing
-  if(!F&&!B&&!L&&!R){
+  if (!F && !B && !L && !R) {
     resetLED();
   }
   // Do not move case, see something
-  else if(F&&B&&L&&R){
+  else if (F && B && L && R) {
     setLED("Y");
   }
   // Spin left case
-  else if(!L&&R&&F&&B || !L&&R&&!F&&!B){
+  else if (!L && R && F && B || !L && R && !F && !B) {
     setLED("Y");
     spin('L', 5, 2);
   }
   // Spin right case
-  else if(F&&B || !R&&L&&!F&&!B){ // (F&&B&&!R || !R&&L&&!F&&!B)
+  else if (F && B || !R && L && !F && !B) { // (F&&B&&!R || !R&&L&&!F&&!B)
     setLED("Y");
     spin('R', 5, 2);
   }
   // Forward case
-  else if(!F&&B || !F&&!B&&L&&R){
+  else if (!F && B || !F && !B && L && R) {
     setLED("Y");
     drive(1, 2);
   }
   // Backward case
-  else if(F&&!B){
+  else if (F && !B) {
     setLED("Y");
     drive(-1, 2);
   }
-  else{
+  else {
     setLED("RYG");
   }
 }
 
 /*
- * 
- * 
- */
-void smartWander(){
+   moves robot arount obstacle until obstacle is cleared
+   updates position variable and orientation
+
+*/
+void avoidObstacle() {
   //Create the vector of nearby things to move away from
   double Fr = readIRFront();
   double Ba = readIRBack();
@@ -198,131 +208,226 @@ void smartWander(){
   boolean L = Le < thresh;
   boolean B = Ba < thresh;
   boolean F = Fr < thresh;
-  
+
+  if (F) {
+
+    if (R) {
+      setLED("Y");
+      spin('L', turn, dSpd);
+      avoidObstacle();
+    }
+
+    else if (R && L) {
+      setLED("Y");
+      drive(-straight, dSpd);
+      avoidObstacle();
+    }
+
+  } else {
+    setLED("Y");
+    spin('R', turn, dSpd);
+    avoidObstacle();
+  }
+
+} else if (!L && !R && !B) {
+  resetLED();
+  goToGoal();
+} else {
+  setLED("Y");
+  drive(straight, dSpd);
+  avoidObstacle();
+}
+
+}
+
+void goToGoal(int x, int y) {
+  goalX = x;
+  goalY = y;
+  goToGoal();
+}
+
+void goToGoal() {
+  if (xPos == x && yPos == y) {
+    setLED("RYG")
+    break;
+  }
+  else {
+    Serial.print(xPos);
+    Serial.print(" | ");
+    Serial.print(yPos);
+
+    double Fr = readIRFront();
+    double Ba = readIRBack();
+    double Le = readIRLeft();
+    double Ri = readIRRight();
+    boolean R = Ri < thresh;
+    boolean L = Le < thresh;
+    boolean B = Ba < thresh;
+    boolean F = Fr < thresh;
+
+    // Random wander case
+    if (!F && !B && !L && !R) {
+      theta = atan2((y - yPos), (x - xPos));
+      if (theta == angle) {
+        drive(straight, dSpd);
+      }
+      else {
+        goToAngle(dSpd, theta);
+      }
+      goToGoal(x, y);
+    }
+    else {
+      avoidObstacle();
+    }
+
+  }
+}
+
+
+void goToAngle(int spd, int theta) {
+  setLED("G");            //turn on the green led
+  spin('L', theta, spd);  //spin to the input angle
+  resetLED();             //reset the leds
+}
+
+
+/*
+*/
+void smartWander() {
+  //Create the vector of nearby things to move away from
+  double Fr = readIRFront();
+  double Ba = readIRBack();
+  double Le = readIRLeft();
+  double Ri = readIRRight();
+  boolean R = Ri < thresh;
+  boolean L = Le < thresh;
+  boolean B = Ba < thresh;
+  boolean F = Fr < thresh;
+
   // Random wander case
-  if(!F&&!B&&!L&&!R){
+  if (!F && !B && !L && !R) {
     randomWander();
   }
-  else{
+  else {
     shyKid();
   }
 }
 
- 
-void randomWander(){
+
+void randomWander() {
   //Create the vector of nearby things to move away from
   setLED("G");
-  
-  double vecX = random(128)-32;
-  double vecY = random(128)-32;
-  double mag = sqrt((vecX*vecX)+(vecY*vecY));
-  
-  double r_spd = speedD*vecY/mag*(1.0 + vecX/mag);
-  double l_spd = speedD*vecY/mag*(1.0 - vecX/mag);
-  if (mag < 5){
+
+  double vecX = random(128) - 32;
+  double vecY = random(128) - 32;
+  double mag = sqrt((vecX * vecX) + (vecY * vecY));
+
+  double r_spd = speedD * vecY / mag * (1.0 + vecX / mag);
+  double l_spd = speedD * vecY / mag * (1.0 - vecX / mag);
+  if (mag < 5) {
     stepperLeft.stop();
     stepperRight.stop();
-    if(isStop == 0){
+    if (isStop == 0) {
       isStop = 1;
       stepperLeft.setCurrentPosition(0);
       stepperRight.setCurrentPosition(0);
     }
   }
-  else{   
+  else {
     stepperLeft.setMaxSpeed(l_spd);
     stepperRight.setMaxSpeed(r_spd);
-    
-    for(int i = 1; i < 32000; i++){
-      if(!stepperLeft.runSpeed());
+
+    for (int i = 1; i < 32000; i++) {
+      if (!stepperLeft.runSpeed());
       stepperLeft.move(l_spd);
-      if(!stepperRight.runSpeed());
+      if (!stepperRight.runSpeed());
       stepperRight.move(r_spd);
     }
   }
   resetLED();
 }
 
- 
+
 
 /*
- * readIRLeft returns the value of the Left IR sensor in inches using our linearization formula
- * we developed in the lab
- */
-double readIRLeft(){
+   readIRLeft returns the value of the Left IR sensor in inches using our linearization formula
+   we developed in the lab
+*/
+double readIRLeft() {
   double A = analogRead(irL);
-  double val = (2421.5/(A+1.0))-1.92;
-  if(val > cutoff){
+  double val = (2421.5 / (A + 1.0)) - 1.92;
+  if (val > cutoff) {
     val = cutoff;
   }
-  return(val);
+  return (val);
 }
 
 /*
- * readIRRight returns the value of the Right IR sensor in inches using our linearization formula
- * we developed in the lab
- */
-double readIRRight(){
+   readIRRight returns the value of the Right IR sensor in inches using our linearization formula
+   we developed in the lab
+*/
+double readIRRight() {
   double A = analogRead(irR);
-  double val = (2495.0/(A+3.0))-1.80;
-  if(val > cutoff){
+  double val = (2495.0 / (A + 3.0)) - 1.80;
+  if (val > cutoff) {
     val = cutoff;
   }
-  return(val);
+  return (val);
 }
 
 /*
- * readIRFront returns the value of the Front IR sensor in inches using our linearization formula
- * we developed in the lab
- */
-double readIRFront(){
+   readIRFront returns the value of the Front IR sensor in inches using our linearization formula
+   we developed in the lab
+*/
+double readIRFront() {
   double A = analogRead(irF);
-  double val = (1072.0/(A+1.0))-0.38;
-  if(val > cutoff){
+  double val = (1072.0 / (A + 1.0)) - 0.38;
+  if (val > cutoff) {
     val = cutoff;
   }
-  return(val);
+  return (val);
 }
 
 /*
- * readIRBack returns the value of the Back IR sensor in inches using our linearization formula
- * we developed in the lab
- */
-double readIRBack(){
+   readIRBack returns the value of the Back IR sensor in inches using our linearization formula
+   we developed in the lab
+*/
+double readIRBack() {
   double A = analogRead(irB);
-  double val = (1049.0/(A+7.0))-0.23;
-  if(val > cutoff){
+  double val = (1049.0 / (A + 7.0)) - 0.23;
+  if (val > cutoff) {
     val = cutoff;
   }
-  return(val);
+  return (val);
 }
 
 
 /*
- * readSonL returns the value of the Left sonar sensor in inches using our formula developed in 
- * the lab
- */
-double readSonL(){
+   readSonL returns the value of the Left sonar sensor in inches using our formula developed in
+   the lab
+
+double readSonL() {
   unsigned int val = sonarL.ping();
-  val = 0.0071*val-0.2686;
-  if(val > cutoff){
+  val = 0.0071 * val - 0.2686;
+  if (val > cutoff) {
     val = cutoff;
   }
-  return(val);
-}
+  return (val);
+}*/
 
 
 /*
- * readSonR returns the value of the Right sonar sensor in inches using our formula developed in 
- * the lab
- */
-double readSonR(){
+   readSonR returns the value of the Right sonar sensor in inches using our formula developed in
+   the lab
+
+double readSonR() {
   unsigned int val = sonarR.ping();
-  val = 0.0069*val-0.0544;
-  if(val > cutoff){
+  val = 0.0069 * val - 0.0544;
+  if (val > cutoff) {
     val = cutoff;
   }
-  return(val);
-}
+  return (val);
+}*/
 
 
 
@@ -333,16 +438,16 @@ double readSonR(){
   'R' --- Red LED
   'Y' --- Yellow LED
   'G' --- Green LED
- */
-void setLED(String led){
+*/
+void setLED(String led) {
   resetLED();                   //reset the LEDs
-  if(led.indexOf('R') >= 0){    //if the string input contains the character 'R'
+  if (led.indexOf('R') >= 0) {  //if the string input contains the character 'R'
     digitalWrite(redLED, HIGH); //set the red LED to HIGH
   }
-  if(led.indexOf('Y') >= 0){    //if the string input contains the character 'Y'
+  if (led.indexOf('Y') >= 0) {  //if the string input contains the character 'Y'
     digitalWrite(ylwLED, HIGH); //set the yellow LED to HIGH
   }
-  if(led.indexOf('G') >= 0){    //if the string input contains the character 'G'
+  if (led.indexOf('G') >= 0) {  //if the string input contains the character 'G'
     digitalWrite(grnLED, HIGH); //set the green LED to HIGH
   }
 }
@@ -350,8 +455,8 @@ void setLED(String led){
 
 /*
   resetLED turns all three leds to the LOW state.
- */
-void resetLED(void){
+*/
+void resetLED(void) {
   digitalWrite(redLED, LOW);  //reset the red LED
   digitalWrite(ylwLED, LOW);  //reset the yellow LED
   digitalWrite(grnLED, LOW);  //reset the green LED
@@ -359,28 +464,29 @@ void resetLED(void){
 
 
 /*
- * spin() turns the robot in a spin about the point in the center between its wheels. 
+   spin() turns the robot in a spin about the point in the center between its wheels.
 */
 void spin(char dir, int theta, int spd) {
   double dist;  //the distance that the robot should mobe in inches
   int neg;      //the direction the right wheel should move
-  if(dir == 'L')
+  if (dir == 'L')
     neg = 1;    //move left
   else
     neg = -1;   //move right
-  dist = theta*PI/180.0*w/2.0;   //calculate the distance to make the theta turn
+  dist = theta * PI / 180.0 * w / 2.0; //calculate the distance to make the theta turn
   spd = convertStp(spd);         //convert speeds from input to steps/sec
   dist = convertStp(dist);       //convert distances from inches to steps
-  stepperLeft.move(-neg*dist);   //set stepper distance
-  stepperRight.move(neg*dist);   //set stepper distance
+  stepperLeft.move(-neg * dist); //set stepper distance
+  stepperRight.move(neg * dist); //set stepper distance
   stepperLeft.setMaxSpeed(spd);  //set stepper speed
   stepperRight.setMaxSpeed(spd); //set stepper speed
   runToStop();                   //move to the desired position
+  angle += theta;
 }
 
 
-/* 
- *  drive() moves the robot straight at the speed recieved from its input. 
+/*
+    drive() moves the robot straight at the speed recieved from its input.
 */
 void drive(int dist, int spd) {
   spd = convertStp(spd);          //convert speeds from input to steps/sec]
@@ -390,12 +496,14 @@ void drive(int dist, int spd) {
   stepperLeft.setMaxSpeed(spd);   //set stepper speed
   stepperRight.setMaxSpeed(spd);  //set stepper speed
   runToStop();                    //move to the desired position
+  x += dist * cos(angle * pi / 180.0);
+  y += dist * sin(angle * pi / 180.0);
 }
 
 
 /*
- * runToStop runs both the right and left stepper until they stop moving
- */
+   runToStop runs both the right and left stepper until they stop moving
+*/
 void runToStop ( void ) {
   int runL = 1;   //state variabels
   int runR = 1;   //state variables
@@ -413,17 +521,19 @@ void runToStop ( void ) {
   convert a value from inches/XX to steps/XX or the right wheel
 
   val is a value with units of inches/XX
- */
+*/
 int convertStp (double val) {
-  int ans = (int) ceil(val/dstStep);  //conversion factor
+  int ans = (int) ceil(val / dstStep); //conversion factor
   return ans;   //return ans
 }
 
 
 
+
+
 /*
- * Vector movement behavior originally created for shyKid, useful for smartWander. 
-double vecX = Le - Ri;
+   Vector movement behavior originally created for shyKid, useful for smartWander.
+  double vecX = Le - Ri;
   double vecY = Fr - Ba;
   double mag = sqrt((vecX*vecX)+(vecY*vecY));
   if(vecY == 0){
@@ -440,10 +550,10 @@ double vecX = Le - Ri;
       stepperRight.setCurrentPosition(0);
     }
   }
-  else{   
+  else{
     stepperLeft.setMaxSpeed(l_spd);
     stepperRight.setMaxSpeed(r_spd);
-    
+
     for(int i = 1; i < 999; i++){
       if(!stepperLeft.runSpeed());
       stepperLeft.move(l_spd);
@@ -451,4 +561,4 @@ double vecX = Le - Ri;
       stepperRight.move(r_spd);
     }
   }
-  */
+*/
