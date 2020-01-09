@@ -28,7 +28,7 @@
 
 #include <AccelStepper.h>   //include the stepper motor library
 #include <MultiStepper.h>   //include multiple stepper motor library
-//#include <NewPing.h>        //include sonar ping library
+#include <NewPing.h>        //include sonar ping library
 
 //define pin numbers
 const int rtStepPin = 44;         //right stepper motor step pin
@@ -43,16 +43,16 @@ const double w = 8.25;            //distance between centers of wheels in inches
 const double dstStep = PI * d / spr; //linear distance of one wheel step
 const int thresh = 10;            //threshold for stopping (inches)
 const int numStep = 5;            //Run the robot constantly for some value steps
-const int isStop = 0;             //variable for whether the robot is stopped.
 const int cutoff = 15;
 const int dSpd = 4;               //default speed for movement
-const int turn = 45;              //default step movement distance for turns
+const int turn = 90;              //default step movement distance for turns
 const int straight = 2;           //default movement distance for going forward
-int xPos = 0;                     //x position of the robot
-int yPos = 0;                     //y position of the robot
+int isStop = 0;                   //variable for whether the robot is stopped.
+double xPos = 0;                     //x position of the robot
+double yPos = 0;                     //y position of the robot
 double angle = 0;                 //heading of the robot
-int xGoal = 0;                    //x coordinate of the goal
-int yGoal = 0;                    //y coordinate of the goal
+double xGoal = 0;                    //x coordinate of the goal
+double yGoal = 0;                    //y coordinate of the goal
 
 
 AccelStepper stepperLeft(AccelStepper::DRIVER, rtStepPin, rtDirPin);    //create instance of right stepper motor object (2 driver pins, low to high transition step pin 52, direction input pin 53 (high means forward)
@@ -60,8 +60,8 @@ AccelStepper stepperRight(AccelStepper::DRIVER, ltStepPin, ltDirPin);   //create
 MultiStepper steppers;                                                  //create instance to control multiple steppers at the same time
 
 // Sonar setup
-//NewPing sonarL(sPinL, sPinL, 200);            //setup left sonar
-//NewPing sonarR(sPinR, sPinR, 200);            //setup right sonar
+NewPing sonarL(sPinL, sPinL, 200);            //setup left sonar
+NewPing sonarR(sPinR, sPinR, 200);            //setup right sonar
 
 #define stepperEnable 48    //stepper enable pin on stepStick 
 #define redLED 5            //red LED for displaying states
@@ -110,9 +110,11 @@ void setup()
 void loop()
 {
   //angryKid(-1);
-  shyKid();
+  //shyKid();
   //randomWander();
   //smartWander();
+  Serial.println("begin");
+  goToGoal(36, 36);
 }
 
 /*
@@ -198,6 +200,7 @@ void shyKid() {
    updates position variable and orientation
 
 */
+
 void avoidObstacle() {
   //Create the vector of nearby things to move away from
   double Fr = readIRFront();
@@ -208,7 +211,14 @@ void avoidObstacle() {
   boolean L = Le < thresh;
   boolean B = Ba < thresh;
   boolean F = Fr < thresh;
-
+  Serial.println("Obstacle Avoidance");
+  Serial.print(Fr);
+  Serial.print(" | ");
+  Serial.print(Ba);
+  Serial.print(" | ");
+  Serial.print(Le);
+  Serial.print(" | ");
+  Serial.println(Ri);
   if (F) {
 
     if (R) {
@@ -222,39 +232,45 @@ void avoidObstacle() {
       drive(-straight, dSpd);
       avoidObstacle();
     }
+    else {
+      setLED("Y");
+      spin('R', turn, dSpd);
+      avoidObstacle();
+    }
 
+  } else if (!L && !R && !B) {
+    resetLED();
+    goToGoal();
   } else {
     setLED("Y");
-    spin('R', turn, dSpd);
+    drive(straight*2, dSpd);
     avoidObstacle();
   }
-
-} else if (!L && !R && !B) {
-  resetLED();
-  goToGoal();
-} else {
-  setLED("Y");
-  drive(straight, dSpd);
-  avoidObstacle();
-}
 
 }
 
 void goToGoal(int x, int y) {
-  goalX = x;
-  goalY = y;
+  xGoal = x;
+  yGoal = y;
   goToGoal();
+  Serial.println(xGoal);
+  Serial.println(" | ");
+  Serial.println(yGoal);
+
+  
 }
 
 void goToGoal() {
-  if (xPos == x && yPos == y) {
-    setLED("RYG")
-    break;
+  if (xPos == xGoal && yPos == yGoal) {
+    Serial.println("Goal!");
+    setLED("RYG");
   }
   else {
     Serial.print(xPos);
     Serial.print(" | ");
     Serial.print(yPos);
+    Serial.print(" | ");
+    Serial.println(angle);
 
     double Fr = readIRFront();
     double Ba = readIRBack();
@@ -267,14 +283,15 @@ void goToGoal() {
 
     // Random wander case
     if (!F && !B && !L && !R) {
-      theta = atan2((y - yPos), (x - xPos));
+      int theta = atan2((yGoal - yPos), (xGoal - xPos))*180/PI;
+      Serial.println(theta);
       if (theta == angle) {
         drive(straight, dSpd);
       }
       else {
-        goToAngle(dSpd, theta);
+        goToAngle(dSpd, theta - angle);
       }
-      goToGoal(x, y);
+      goToGoal();
     }
     else {
       avoidObstacle();
@@ -406,28 +423,28 @@ double readIRBack() {
    readSonL returns the value of the Left sonar sensor in inches using our formula developed in
    the lab
 
-double readSonL() {
+  double readSonL() {
   unsigned int val = sonarL.ping();
   val = 0.0071 * val - 0.2686;
   if (val > cutoff) {
     val = cutoff;
   }
   return (val);
-}*/
+  }*/
 
 
 /*
    readSonR returns the value of the Right sonar sensor in inches using our formula developed in
    the lab
 
-double readSonR() {
+  double readSonR() {
   unsigned int val = sonarR.ping();
   val = 0.0069 * val - 0.0544;
   if (val > cutoff) {
     val = cutoff;
   }
   return (val);
-}*/
+  }*/
 
 
 
@@ -481,7 +498,7 @@ void spin(char dir, int theta, int spd) {
   stepperLeft.setMaxSpeed(spd);  //set stepper speed
   stepperRight.setMaxSpeed(spd); //set stepper speed
   runToStop();                   //move to the desired position
-  angle += theta;
+  angle += neg*theta;
 }
 
 
@@ -490,14 +507,14 @@ void spin(char dir, int theta, int spd) {
 */
 void drive(int dist, int spd) {
   spd = convertStp(spd);          //convert speeds from input to steps/sec]
+  xPos += dist * cos(angle * PI / 180.0);
+  yPos += dist * sin(angle * PI / 180.0);
   dist = convertStp(dist);        //convert distances from inches to steps
   stepperLeft.move(dist);         //set stepper distance
   stepperRight.move(dist);        //set stepper distance
   stepperLeft.setMaxSpeed(spd);   //set stepper speed
   stepperRight.setMaxSpeed(spd);  //set stepper speed
   runToStop();                    //move to the desired position
-  x += dist * cos(angle * pi / 180.0);
-  y += dist * sin(angle * pi / 180.0);
 }
 
 
