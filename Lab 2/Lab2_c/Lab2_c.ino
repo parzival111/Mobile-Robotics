@@ -1,16 +1,9 @@
 /************************************
   Arbib-Lab01.ino
-  Peter Garnache and Carson Stone 12/12/19
+  Peter Garnache 12/05/19
 
   This program demonstrates several AI behaviors regarding obstacle avoidance.
 
-  The created functions include the following:
-  goToGoal()      - drive to a position while avoiding any encountered obstacles
-  avoidObstacle() - avoid obstacles while still moving towards a goal (called as part of the goToGoal program)
-  shyKid()        - move away from any obstacles that the robot sees
-  angryKid()      - move either forward or backward until the robot senses an obstacle in the way.
-  randomWander()  - create a random vector and move the robot in a random direction based on that vector
-  smartWander()   - randomly move throughout a room while avoiding any obstacles that the robot encounters
 
   Hardware Connections:
   digital pin 48 - enable PIN on A4988 Stepper Motor Driver StepSTICK
@@ -132,26 +125,25 @@ void loop()
 */
 void angryKid(int dir) {
 
-  double front = readIRFront(); //read front IR sensor
-  double back = readIRBack();   //read back IR sensor
-  
+  double front = readIRFront();
+  double back = readIRBack();
   if ( front < thresh || back < thresh) {
     setLED("R");
-    stepperLeft.stop();   //stop robot
-    stepperRight.stop();  //stop robot
+    stepperLeft.stop();
+    stepperRight.stop();
     if (isStop == 0) {
       isStop = 1;
-      stepperLeft.setCurrentPosition(0);  //reset the position of the robot to allow for smooth acceleration
-      stepperRight.setCurrentPosition(0); //reset the position of the robot to allow for smooth acceleration
+      stepperLeft.setCurrentPosition(0);
+      stepperRight.setCurrentPosition(0);
     }
   }
   else {
     setLED("G");
     isStop = 0;
     if (!stepperLeft.runSpeed())
-      stepperLeft.move(dir * 80000); //if the right stepper reaches its goal position, increase the destination
+      stepperLeft.move(dir * 80000);
     if (!stepperRight.runSpeed())
-      stepperRight.move(dir * 80000); //if the right stepper reaches its goal position, increase the destination
+      stepperRight.move(dir * 80000);
   }
   resetLED();
 }
@@ -183,22 +175,22 @@ void shyKid() {
   // Spin left case
   else if (!L && R && F && B || !L && R && !F && !B) {
     setLED("Y");
-    spin('L', 5, 2); // spin left 5 degrees at a rate of 2 in/s
+    spin('L', 5, 2);
   }
   // Spin right case
   else if (F && B || !R && L && !F && !B) { // (F&&B&&!R || !R&&L&&!F&&!B)
     setLED("Y");
-    spin('R', 5, 2); // spin right 5 degrees at a rate of 2 in/s
+    spin('R', 5, 2);
   }
   // Forward case
   else if (!F && B || !F && !B && L && R) {
     setLED("Y");
-    drive(1, 2); // move forward for 1 inch at a speed of 2 in/s
+    drive(1, 2);
   }
   // Backward case
   else if (F && !B) {
     setLED("Y");
-    drive(-1, 2); // move backward for 1 inch at a speed of 2 in/s
+    drive(-1, 2);
   }
   else {
     setLED("RYG");
@@ -296,7 +288,7 @@ void goToGoal() {
     if (!F && !B && !L && !R) { //if the robot does not sense an obstacle
       boolean doDrive = true;
       if (currentCoord == 'X') {
-        if (xPos == xGoal) {    //if the x goal is reached, then set the current coordinate for driving to Y. Don't move for this computational step
+        if (xPos == xGoal) {  //if the x goal is reached, then set the current coordinate for driving to Y. Don't move for this computational step
           currentCoord = 'Y';
           doDrive = false;
         }
@@ -315,24 +307,26 @@ void goToGoal() {
           doDrive = false;
         }
         else {
-          if (yGoal - yPos > 0) { //Set the direction that the robot needs to point in to move closer to the goal
-            theta = 90;
-          }
-          else {
-            theta = 270;
+          if (yGoal - yPos > 0) {
+            { //Set the direction that the robot needs to point in to move closer to the goal
+              theta = 90;
+            }
+            else {
+              theta = 270;
+            }
           }
         }
-      }
-      if (doDrive) {
-        if (angle != theta) {
-          goToAngle(dSpd, theta); // if the bot is pointed in the wrong direction for the movement it needs to make, turn it to the right direction
+        if (doDrive) {
+          if (angle != theta) {
+            goToAngle(dSpd, theta);   // if the bot is pointed in the wrong direction for the movement it needs to make, turn it to the right direction
+          }
+          drive(straight, dSpd);      // assuming the bot is now in the correct position, make a movement forward 1 inch
         }
-        drive(straight, dSpd);    // assuming the bot is now in the correct position, make a movement forward 1 inch
+        goToGoal(); //recursive call to eliminate while loop
       }
-      goToGoal(); //recursive call to eliminate while loop
-    }
-    else {
-      avoidObstacle(); //if the robot senses something, go to avoiObstacle()
+      else {
+        avoidObstacle();  //if the robot senses something, go to avoiObstacle()
+      }
     }
   }
 }
@@ -382,23 +376,23 @@ void smartWander() {
 void randomWander() {
   setLED("G");
 
-  double vecX = random(64) - 32; //randomize a x coordinate with 50% chance of being left or right
+  double vecX = random(128) - 32; //randomize a x coordinate with 75% chance of being forward
   double vecY = random(128) - 32; //randomize a y coordinate with 75% chance of being forward
   double mag = sqrt((vecX * vecX) + (vecY * vecY)); //find the magnitude of the vector
 
   double r_spd = speedD * vecY / mag * (1.0 + vecX / mag);  //choose the left wheel speed to follow the vector
   double l_spd = speedD * vecY / mag * (1.0 - vecX / mag);  //choose the right wheel speed to follow the vector
-
+  
   stepperLeft.setMaxSpeed(l_spd);   //set the left speed
   stepperRight.setMaxSpeed(r_spd);  //set the right speed
 
   for (int i = 1; i < 32000; i++) { //move forward at the given speed for a short while
-    if (!stepperLeft.runSpeed())
+    if (!stepperLeft.runSpeed());
     stepperLeft.move(l_spd);
-    if (!stepperRight.runSpeed())
+    if (!stepperRight.runSpeed());
     stepperRight.move(r_spd);
   }
-
+  
   resetLED();
 }
 
@@ -410,7 +404,7 @@ void randomWander() {
 double readIRLeft() {
   double A = analogRead(irL);               //read the sensor value
   double val = (2421.5 / (A + 1.0)) - 1.92; //use our calculated equations to change from analog to inches
-  if (val > cutoff) {
+  if (val > cutoff) {                       
     val = cutoff;                           //eliminate large readings
   }
   return (val);
@@ -462,29 +456,29 @@ double readIRBack() {
 /*
    readSonL returns the value of the Left sonar sensor in inches using our formula developed in
    the lab
-*/
-double readSonL() {
+*//*
+  double readSonL() {
   unsigned int val = sonarL.ping();
   val = 0.0071 * val - 0.2686;
   if (val > cutoff) {
-    val = cutoff;
+  val = cutoff;
   }
   return (val);
-}
+  }*/
 
 
 /*
    readSonR returns the value of the Right sonar sensor in inches using our formula developed in
    the lab
-*/
-double readSonR() {
+*//*
+  double readSonR() {
   unsigned int val = sonarR.ping();
   val = 0.0069 * val - 0.0544;
   if (val > cutoff) {
-    val = cutoff;
+  val = cutoff;
   }
   return (val);
-}
+  }*/
 
 
 
