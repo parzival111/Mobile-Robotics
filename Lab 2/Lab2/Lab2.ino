@@ -28,7 +28,7 @@
 
 #include <AccelStepper.h>   //include the stepper motor library
 #include <MultiStepper.h>   //include multiple stepper motor library
-#include <NewPing.h>        //include sonar ping library
+//#include <NewPing.h>        //include sonar ping library
 
 //define pin numbers
 const int rtStepPin = 44;         //right stepper motor step pin
@@ -44,15 +44,15 @@ const double dstStep = PI * d / spr; //linear distance of one wheel step
 const int thresh = 10;            //threshold for stopping (inches)
 const int numStep = 5;            //Run the robot constantly for some value steps
 const int cutoff = 15;
-const int dSpd = 4;               //default speed for movement
-const int turn = 90;              //default step movement distance for turns
-const int straight = 2;           //default movement distance for going forward
+const int dSpd = 3;               //default speed for movement
+const int turn = 5;              //default step movement distance for turns
+const int straight = 1;           //default movement distance for going forward
 int isStop = 0;                   //variable for whether the robot is stopped.
 double xPos = 0;                     //x position of the robot
 double yPos = 0;                     //y position of the robot
 double angle = 0;                 //heading of the robot
-double xGoal = 0;                    //x coordinate of the goal
-double yGoal = 0;                    //y coordinate of the goal
+double xGoal = 3;                    //x coordinate of the goal
+double yGoal = 3;                   //y coordinate of the goal
 
 
 AccelStepper stepperLeft(AccelStepper::DRIVER, rtStepPin, rtDirPin);    //create instance of right stepper motor object (2 driver pins, low to high transition step pin 52, direction input pin 53 (high means forward)
@@ -60,8 +60,8 @@ AccelStepper stepperRight(AccelStepper::DRIVER, ltStepPin, ltDirPin);   //create
 MultiStepper steppers;                                                  //create instance to control multiple steppers at the same time
 
 // Sonar setup
-NewPing sonarL(sPinL, sPinL, 200);            //setup left sonar
-NewPing sonarR(sPinR, sPinR, 200);            //setup right sonar
+//NewPing sonarL(sPinL, sPinL, 200);            //setup left sonar
+//NewPing sonarR(sPinR, sPinR, 200);            //setup right sonar
 
 #define stepperEnable 48    //stepper enable pin on stepStick 
 #define redLED 5            //red LED for displaying states
@@ -219,6 +219,7 @@ void avoidObstacle() {
   Serial.print(Le);
   Serial.print(" | ");
   Serial.println(Ri);
+  
   if (F) {
 
     if (R) {
@@ -239,12 +240,28 @@ void avoidObstacle() {
     }
 
   } else if (!L && !R && !B) {
+
     resetLED();
     goToGoal();
+
   } else {
-    setLED("Y");
-    drive(straight*2, dSpd);
-    avoidObstacle();
+
+    if (R) {
+      setLED("Y");
+      spin('L', turn, dSpd);
+      drive(straight, dSpd);
+      avoidObstacle();
+    }
+    else if (L) {
+      setLED("Y");
+      spin('R', turn, dSpd);
+      drive(straight, dSpd);
+      avoidObstacle();
+    } else {
+      setLED("Y");
+      drive(straight, dSpd);
+      avoidObstacle();
+    }
   }
 
 }
@@ -257,15 +274,15 @@ void goToGoal(int x, int y) {
   Serial.println(" | ");
   Serial.println(yGoal);
 
-  
+
 }
 
 void goToGoal() {
   if (xPos == xGoal && yPos == yGoal) {
     Serial.println("Goal!");
     setLED("RYG");
-  }
-  else {
+
+  } else {
     Serial.print(xPos);
     Serial.print(" | ");
     Serial.print(yPos);
@@ -283,25 +300,24 @@ void goToGoal() {
 
     // Random wander case
     if (!F && !B && !L && !R) {
-      int theta = atan2((yGoal - yPos), (xGoal - xPos))*180/PI;
+      double theta = atan2((yGoal - yPos), (xGoal - xPos)) * 180.0 / PI;
       Serial.println(theta);
-      if (theta == angle) {
-        drive(straight, dSpd);
-      }
-      else {
-        goToAngle(dSpd, theta - angle);
-      }
+
+      goToAngle(dSpd, (theta - angle) / 2);
+      drive(straight, dSpd);
+
       goToGoal();
-    }
-    else {
+
+    } else {
       avoidObstacle();
     }
 
   }
+
 }
 
 
-void goToAngle(int spd, int theta) {
+void goToAngle(int spd, double theta) {
   setLED("G");            //turn on the green led
   spin('L', theta, spd);  //spin to the input angle
   resetLED();             //reset the leds
@@ -483,7 +499,7 @@ void resetLED(void) {
 /*
    spin() turns the robot in a spin about the point in the center between its wheels.
 */
-void spin(char dir, int theta, int spd) {
+void spin(char dir, double theta, int spd) {
   double dist;  //the distance that the robot should mobe in inches
   int neg;      //the direction the right wheel should move
   if (dir == 'L')
@@ -498,7 +514,7 @@ void spin(char dir, int theta, int spd) {
   stepperLeft.setMaxSpeed(spd);  //set stepper speed
   stepperRight.setMaxSpeed(spd); //set stepper speed
   runToStop();                   //move to the desired position
-  angle += neg*theta;
+  angle += neg * theta;
 }
 
 
