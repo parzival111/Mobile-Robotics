@@ -487,8 +487,6 @@ double readSonR() {
 }
 
 
-
-
 /*
   setLED recieves a string including the characters of LEDs that should be turned on.
   Characters include
