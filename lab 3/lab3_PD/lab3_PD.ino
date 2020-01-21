@@ -30,15 +30,16 @@
 #define pauseTime 2500      //time before robot moves
 
 // Sensor reading values
-#define cutoff 9           //cutoff for reading IR sensor values
+//#define cutoff 9            //cutoff for reading IR sensor values
 #define avoidThresh 2
+#define Cutoff 9
 
 #define timer_rate 20                  // sensor update calls per second
 #define timer_int 1000000/timer_rate  // timer interrupt interval in microseconds
 
 //constants for PD control
-#define Kp  10
-//#define Kd  0.1
+#define Kp  0.1
+//#define Kd  0.01
 
 // states of the robot
 #define randomWander 1
@@ -167,19 +168,19 @@ void updateState() {
   if (irFront <= avoidThresh || irBack <= avoidThresh || irLeft <= avoidThresh || irRight <= avoidThresh) {
     avoidObstacleState();
 
-  } else if ( irFront < cutoff) {
+  } else if ( irFront < Cutoff) {
     collideState();
 
-  } else if (irLeft < cutoff && irRight < cutoff) {
+  } else if (irLeft < Cutoff && irRight < Cutoff) {
     followCenterState();
 
-  } else if (irLeft < cutoff) {
+  } else if (irLeft < Cutoff) {
     followLeftState();
 
-  } else if (irRight < cutoff) {
+  } else if (irRight < Cutoff) {
     followRightState();
 
-  } else if (irFront >= cutoff && irLeft >= cutoff && irRight >= cutoff) {
+  } else if (irFront >= Cutoff && irLeft >= Cutoff && irRight >= Cutoff) {
     randomWanderState();
 
   } else {   // catch in case we do not go to a defined state
@@ -207,8 +208,8 @@ void followLeftState() {
   resetLED();
   setLED("Y");
 
-  error = irLeft - 5.0;
-  X = Kp * error;
+  double e = irLeft - 5.0;
+  X = Kp * e;
 
   updateSpeed();
 
@@ -219,8 +220,8 @@ void followCenterState() {
   resetLED();
   setLED("YR");
 
-  error = irRight - irLeft;
-  X = Kp * error;
+  double e = irRight - irLeft;
+  X = Kp * e;
 
   updateSpeed();
 
@@ -233,8 +234,8 @@ void followRightState() {
   resetLED();
   setLED("G");
 
-  error = 5.0 - irRight;
-  X = Kp * error;
+  double e = 5.0 - irRight;
+  X = Kp * e;
 
   updateSpeed();
 
@@ -242,10 +243,29 @@ void followRightState() {
 }
 
 void collideState() {
+  double e = 0;
   resetLED();
   setLED("GR");
 
-  state = collide;
+  if (state == followLeft) {
+    e = (Cutoff / irFront);
+    X = Kp * e;
+
+    updateSpeed();
+    
+  } else if (state == followRight) {
+    e = (Cutoff / irFront);
+    X = Kp * e;
+
+    updateSpeed();
+
+  } else {
+    e = (Cutoff / irFront);
+    X = Kp * e;
+
+    state = followLeft;
+    updateSpeed();
+  }
 }
 
 void avoidObstacleState() {
@@ -316,8 +336,8 @@ double updateSpeed() {
 double readIRRight() {
   double A = analogRead(irR);               //read the sensor value
   double val = (2421.5 / (A + 1.0)) - 1.92; //use our calculated equations to change from analog to inches
-  if (val > cutoff) {
-    val = cutoff;                           //eliminate large readings
+  if (val > Cutoff) {
+    val = Cutoff;                           //eliminate large readings
   }
   return (val);
 }
@@ -329,8 +349,8 @@ double readIRRight() {
 double readIRLeft() {
   double A = analogRead(irL);               //read the sensor value
   double val = (2495.0 / (A + 3.0)) - 1.80; //use our calculated equations to change from analog to inches
-  if (val > cutoff) {
-    val = cutoff;                           //eliminate large readings
+  if (val > Cutoff) {
+    val = Cutoff;                           //eliminate large readings
   }
   return (val);
 }
@@ -342,8 +362,8 @@ double readIRLeft() {
 double readIRFront() {
   double A = analogRead(irF);               //read the sensor value
   double val = (1049.0 / (A + 7.0)) - 0.23; //use our calculated equations to change from analog to inches
-  if (val > cutoff) {
-    val = cutoff;                           //eliminate large readings
+  if (val > Cutoff) {
+    val = Cutoff;                           //eliminate large readings
   }
   return (val);
 }
@@ -354,8 +374,8 @@ double readIRFront() {
 double readIRBack() {
   double A = analogRead(irB);               //read the sensor value
   double val = (1072.0 / (A + 1.0)) - 0.38; //use our calculated equations to change from analog to inches
-  if (val > cutoff) {
-    val = cutoff;                           //eliminate large readings
+  if (val > Cutoff) {
+    val = Cutoff;                           //eliminate large readings
   }
   return (val);
 }
