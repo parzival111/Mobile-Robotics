@@ -17,7 +17,7 @@
 #define irR 3       //right IR
 
 // Stepper Library Default Speeds
-#define speedD 300         //default speed
+#define speedD 800          //default speed
 #define accelD 1200         //default acceleration
 #define updateDist 12800    //
 
@@ -33,8 +33,8 @@
 #define cutoff 9           //cutoff for reading IR sensor values
 #define avoidThresh 2
 
-#define timer_int 100000    // timer interrupt interval in microseconds
-#define timer_rate = 1/(timer_int*0.000001);
+#define timer_rate 20                  // sensor update calls per second
+#define timer_int 1000000/timer_rate  // timer interrupt interval in microseconds
 
 //constants for PD control
 #define Kp  10
@@ -50,14 +50,15 @@
 
 
 /*******************************GLOBAL VARIABLES*****************************************/
-// Variables for converting steps to distances
 
+// Variables for converting steps to distances
 const int spr = 800;                  //stepper steps per revolution of the wheel
 const double d = 3.365;               //diameter of the wheel in inches
 const double w = 8.25;                //distance between centers of wheels in inches
 const double dstStep = PI * d / spr;  //linear distance of one wheel step
 const double l = 8;                   //length of the robot
-double r;                             //radius of curvature the robot is turning
+double X;                             //magnitude of the robot's turning
+double Y;                             //magnitude of the robot's movement
 
 // sensor data
 double irFront = 20;                  //variable to hold average of current front IR reading
@@ -67,10 +68,11 @@ double irRight = 20;                  //variable to hold average of current righ
 
 // states variables for the robot
 byte state = 0;                       //variable to tell what state the robot is in
+unsigned int stateCount = 0;          //variable to count state machine calls
 
-// variables for speed the robot wheels durn
+// variables for speed the robot wheels turn
 double error = 0;                      //diference that is inputted to controller
-//double derror = 0;                     //rate of change of deference between current and desired
+//double derror = 0;                   //rate of change of deference between current and desired
 
 
 /*******************************INITIALIZE***********************************************/
@@ -160,7 +162,8 @@ void updateSensors() {
   avoidObstacle = 6;
 */
 void updateState() {
-
+  stateCount ++;
+  
   if (irFront <= avoidThresh || irBack <= avoidThresh || irLeft <= avoidThresh || irRight <= avoidThresh) {
     avoidObstacleState();
 
@@ -190,8 +193,13 @@ void randomWanderState() {
   resetLED();
   setLED("R");
   // give the radius the chance to change using the random() function
-  r = random(25)-12;
-  updateSpeed();
+  double x = random(-30,30);
+  if (stateCount % timer_rate == 0){
+    X = x/100;
+    Serial.println(X);
+    Y = 1;
+    updateSpeed();
+  }
   state = randomWander;
 }
 
@@ -200,7 +208,7 @@ void followLeftState() {
   setLED("Y");
 
   error = irLeft - 5.0;
-  r = 1 / (Kp * error);
+  X = Kp * error;
 
   updateSpeed();
 
@@ -212,7 +220,7 @@ void followCenterState() {
   setLED("YR");
 
   error = irRight - irLeft;
-  r = 1 / (Kp * error);
+  X = Kp * error;
 
   updateSpeed();
 
@@ -226,7 +234,7 @@ void followRightState() {
   setLED("G");
 
   error = 5.0 - irRight;
-  r = 1 / (Kp * error);
+  X = Kp * error;
 
   updateSpeed();
 
@@ -280,6 +288,28 @@ void avoidObstacleState() {
 }
 
 
+
+double updateSpeed() {
+  int spdL = Y*speedD/2 + X*speedD;
+  int spdR = Y*speedD/2 - X*speedD;
+  stepperLeft.setSpeed(spdL);
+  stepperRight.setSpeed(spdR);
+  stepperLeft.setMaxSpeed(spdL);
+  stepperRight.setMaxSpeed(spdR);
+  
+  Serial.print(X);
+  Serial.print(" | R: ");
+  Serial.print(stepperRight.speed());
+  Serial.print(" | ");
+  Serial.print(spdR);
+  Serial.print(" | L: ");
+  Serial.print(stepperLeft.speed());
+  Serial.print(" | ");
+  Serial.println(spdL);
+}
+
+
+
 /*
    readIRRight returns the value of the right IR sensor in inches
 */
@@ -303,22 +333,6 @@ double readIRLeft() {
     val = cutoff;                           //eliminate large readings
   }
   return (val);
-}
-
-
-double updateSpeed() {
-  if (abs(r) >=  150) {
-    stepperLeft.setSpeed(speedD*(r/abs(r)));
-    stepperRight.setSpeed(speedD*(r/abs(r)));
-  }
-
-  //  } else if (r <= 5) {
-  //    stepperLeft.setSpeed = speedD * (-r / abs(r));
-  //    stepperRight.setSpeed = speedD * (r / abs(r));
-  //  }
-
-  stepperLeft.setSpeed(speedD * (abs(r - (w / 2)) / abs(r)));
-  stepperRight.setSpeed(speedD * (abs(r + (w / 2)) / abs(r)));
 }
 
 
