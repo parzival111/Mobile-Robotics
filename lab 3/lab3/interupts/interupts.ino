@@ -1,31 +1,72 @@
 
-
 #include <AccelStepper.h>   //include the stepper motor library
 #include <MultiStepper.h>   //include multiple stepper motor library
 #include <NewPing.h>        //include sonar ping library
-#include <TimerOne.h>
+#include <TimerOne.h>       //include library for timers with interrupts
 
+////////////////////GLOBAL VARIABLES////////////////////////////////
 
-
-
-//define pin numbers
+// define pin numbers
 const int rtStepPin = 44;             //right stepper motor step pin
 const int rtDirPin = 49;              //right stepper motor direction pin
 const int ltStepPin = 46;             //left stepper motor step pin
 const int ltDirPin = 53;              //left stepper motor direction pin
+const int snrLeft = A8;               //left sonar pin
+const int snrRight = A9;              //right sonar pin
 
+// constant numbers other methods use for movement
+const int numStep = 5;                //Run the robot constantly for some value steps
+const int dSpd = 4;                   //default speed for movement
+const int turn = 90;                  //default step movement distance for turns
+const int straight = 3;               //default movement distance for going forward
+const double bangAngle = 15;          //angle to turn for bangBang()
 
-byte state = 0;
-byte flag = 0;
+// sensor data
+double irFront = 20;                  //variable to hold average of current front IR reading
+double irBack = 20;                   //variable to hold average of current rear IR reading
+double irLeft = 20;                   //variable to hold average of current left IR reading
+double irRight = 20;                  //variable to hold average of current right IR reading
+double srLeft = 20;                   //variable to hold average of left sonar current reading
+double srRight = 20;                  //variable to hold average or right sonar current reading
 
+// values based off of dimentions of robot
+const int spr = 800;                  //stepper steps per revolution of the wheel
+const double d = 3.365;               //diameter of the wheel in inches
+const double w = 8.25;                //distance between centers of wheels in inches
+const double dstStep = PI * d / spr;  //linear distance of one wheel step
+
+// logic to run methods
+const int thresh = 5;                 //threshold for stopping (inches)
+const int cutoff = 20;                // max value for sonar
+int isStop = 0;                       //variable for whether the robot is stopped
+int count = 0;                        //value to see number of times it does not see a wall for bangBang to abort back into drive straight
+char currentCoord = 'X';              //current coordinate that the robot should try to match
+byte flag = 0;                        //flag to let the state know the interupt has been triggered
+
+// position tracking
+double xPos = 0;                      //x position of the robot
+double yPos = 0;                      //y position of the robot
+double angle = 0;                     //heading of the robot
+double xGoal = 0;                     //x coordinate of the goal
+double yGoal = 0;                     //y coordinate of the goal
+
+// states for the robot
+byte state = 0;                       //variable to tell what state the robot is in
+byte nothing = 1;
+byte front = 2;
+byte back = 3;
+byte left = 4;
+byte right = 5;
+byte leftSonar = 6;
+byte rightSonar = 7;
+
+//////////////////////////////////////////////////////////////////////////////////
 
 AccelStepper stepperLeft(AccelStepper::DRIVER, rtStepPin, rtDirPin);    //create instance of right stepper motor object (2 driver pins, low to high transition step pin 52, direction input pin 53 (high means forward)
 AccelStepper stepperRight(AccelStepper::DRIVER, ltStepPin, ltDirPin);   //create instance of left stepper motor object (2 driver pins, step pin 50, direction input pin 51)
 MultiStepper steppers;                                                  //create instance to control multiple steppers at the same time
 
-// Sonar setup
-NewPing sonarL(sPinL, sPinL, 200);            //setup left sonar
-NewPing sonarR(sPinR, sPinR, 200);            //setup right sonar
+////////////////////////////////////////////////////////////////////////////////////
 
 #define stepperEnable 48    //stepper enable pin on stepStick 
 #define redLED 5            //red LED for displaying states
@@ -43,27 +84,25 @@ NewPing sonarR(sPinR, sPinR, 200);            //setup right sonar
 
 #define pauseTime 2500 //time before robot moves
 
-#define timer_int 1000000 // timer interrupt interval in microseconds
+#define timer_int 200000 // timer interrupt interval in microseconds
 
 ///////////// NEW SONAR CLASSES FOR TIMER 2 INTERRUPT/////////////////
+
 //define sonar sensor connections
-#define snrLeft   A1   //front left sonar 
-#define snrRight  A2  //front right sonar 
-#define SONAR_NUM     2         // Number of sensors.
-#define MAX_DISTANCE 200        // Maximum distance (in cm) to ping.
-#define PING_INTERVAL 125        // Milliseconds between sensor pings (29ms is about the min to avoid cross-sensor echo).
-#define FIRST_PING_START 50     // First ping starts at this time in ms, gives time for the Arduino to chill before starting.
+#define SONAR_NUM     2                     // Number of sensors.
+#define MAX_DISTANCE 200                     // Maximum distance(in) to ping.
+#define PING_INTERVAL 500                   // Milliseconds between sensor pings (29ms is about the min to avoid cross-sensor echo).
+#define FIRST_PING_START 100                // First ping starts at this time in ms, gives time for the Arduino to chill before starting.
 
-unsigned long pingTimer[SONAR_NUM]; // Holds the times when the next ping should happen for each sensor.
-unsigned int cm[SONAR_NUM];         // Where the ping distances are stored.
-uint8_t currentSensor = 0;          // Keeps track of which sensor is active.
+unsigned long pingTimer[SONAR_NUM];         // Holds the times when the next ping should happen for each sensor.
+unsigned int pingDistances[SONAR_NUM];      // Where the ping distances are stored.
+uint8_t currentSensor = 0;                  // Keeps track of which sensor is active.
 
-NewPing sonar[SONAR_NUM] = {     // Sensor object array.
-  NewPing(snrLeft, snrLeft, MAX_DISTANCE),//create an instance of the left sonar
-  NewPing(snrRight, snrRight, MAX_DISTANCE),//create an instance of the right sonar
+NewPing sonar[SONAR_NUM] = {                // Sensor object array. first object is left sonar. second object is right sonar
+  NewPing (snrLeft, snrLeft, MAX_DISTANCE),   //create an instance of the left sonar
+  NewPing (snrRight, snrRight, MAX_DISTANCE), //create an instance of the right sonar
 };
 ////////////////////////////////////////////////////////////////////
-
 
 
 void setup() {
@@ -96,44 +135,115 @@ void setup() {
   steppers.addStepper(stepperRight);              //add right motor to MultiStepper steppers
   steppers.addStepper(stepperLeft);               //add left motor to MultiStepper steppers
   digitalWrite(stepperEnable, stepperEnTrue);     //turns on the stepper motor driver
-  delay(pauseTime);
+
+  stepperLeft.setSpeed(3000);        //set left motor speed
+  stepperRight.setSpeed(3000);      //set right motor speed
 
   //Timer Interrupt Set Up
-  Timer1.initialize(timer_int);         // initialize timer1, and set a timer_int second period
-  Timer1.attachInterrupt(updateSensors);  // attaches updateIR() as a timer overflow interrupt
+  Timer1.initialize(timer_int);                   // initialize timer1, and set a timer_int second period
+  Timer1.attachInterrupt(updateSensor);           // attaches updateIR() as a timer overflow interrupt
+
+  delay(pauseTime);
 
 
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  if (flag = 1) {
+    updateState();
+  }
+
+  stepperRight.runSpeed();
+  stepperLeft.runSpeed();
+
 
 }
 
 void updateState() {
   flag = 0;
+  //Serial.println(irFront);
+  //Serial.println(thresh);
+  if (irFront < thresh) {
+    frontState();
+
+  } else if (irBack < thresh) {
+    backState();
+
+  } else if (irLeft < thresh) {
+    leftState();
+
+  } else if (irRight < thresh) {
+    rightState();
+
+  } else if (srLeft < thresh) {
+    leftSonarState();
+
+  } else if (srRight < thresh) {
+    rightSonarState();
+
+  } else {
+    nothingState();
+  }
 }
 
+
+void nothingState() {
+  resetLED();
+  setLED("R");
+  state = nothing;
+}
+void frontState() {
+  resetLED();
+  setLED("Y");
+  state = front;
+}
+void backState() {
+  resetLED();
+  setLED("YR");
+  state = back;
+}
+void leftState() {
+  resetLED();
+  setLED("G");
+  state = left;
+}
+void rightState() {
+  resetLED();
+  setLED("GR");
+  state = right;
+}
+void leftSonarState() {
+  resetLED();
+  setLED("GY");
+  state = leftSonar;
+}
+void rightSonarState() {
+  resetLED();
+  setLED("GYR");
+  state = rightSonar;
+}
+
+
 void updateSensor() {
+  //Serial.println("check");
   flag = 1;
   updateIR();
   updateSonar();
-
-
 }
 
+
 void updateIR() {
-  double Fr = readIRFront();    //read front IR
-  double Ba = readIRBack();     //read back IR
-  double Le = readIRLeft();     //read left IR
-  double Ri = readIRRight();    //read right IR
+  irFront = readIRFront();    //read front IR
+  irBack = readIRBack();     //read back IR
+  irLeft = readIRLeft();     //read left IR
+  irRight = readIRRight();    //read right IR
 
   //  print IR data
   //    Serial.println("frontIR\tbackIR\tleftIR\trightIR");
-  //    Serial.print(irFrontAvg); Serial.print("\t");
-  //    Serial.print(irRearAvg); Serial.print("\t");
-  //    Serial.print(irLeftAvg); Serial.print("\t");
-  //    Serial.println(irRightAvg);
+  //    Serial.print(irFront); Serial.print("\t");
+  //    Serial.print(irRear); Serial.print("\t");
+  //    Serial.print(irLeft); Serial.print("\t");
+  //    Serial.println(irRight);
 }
 
 /*
@@ -141,8 +251,8 @@ void updateIR() {
   the necesary changes for the lab requirements.
 */
 void updateSonar() {
-  test_state = !test_state;//LED to test the heartbeat of the timer interrupt routine
-  digitalWrite(enableLED, test_state);  // Toggles the LED to let you know the timer is working
+  //test_state = !test_state;//LED to test the heartbeat of the timer interrupt routine
+  //digitalWrite(enableLED, test_state);  // Toggles the LED to let you know the timer is working
   for (uint8_t i = 0; i < SONAR_NUM; i++) { // Loop through all the sensors.
     //    Serial.print("\t\t\t");
     //    Serial.print(millis());
@@ -154,20 +264,20 @@ void updateSonar() {
       pingTimer[i] += PING_INTERVAL * SONAR_NUM;  // Set next time this sensor will be pinged.
       if (i == 0 && currentSensor == SONAR_NUM - 1) {
         //oneSensorCycle(); // Sensor ping cycle complete, do something with the results.
-        if (cm[0] > 0)
-          srLeftAvg = cm[0];
-        if (cm[1] > 0)
-          srRightAvg = cm[1];
-        Serial.print("lt snr:\t");
-        Serial.print(srLeftAvg);
-        Serial.print(" cm ");
-        Serial.print("\trt snr:\t");
-        Serial.print(srRightAvg);
-        Serial.println(" cm");
+        if (pingDistances[0] > 0)
+          srLeft = pingDistances[0];
+        if (pingDistances[1] > 0)
+          srRight = pingDistances[1];
+        //Serial.print("lt snr:\t");
+        //Serial.print(srLeft);
+        //Serial.print(" pingDistances ");
+        //Serial.print("\trt snr:\t");
+        //Serial.print(srRight);
+        //Serial.println(" pingDistances");
       }
       sonar[currentSensor].timer_stop();          // Make sure previous timer is canceled before starting a new ping (insurance).
       currentSensor = i;                          // Sensor being accessed.
-      cm[currentSensor] = 0;                      // Make distance zero in case there's no ping echo for this sensor.
+      pingDistances[currentSensor] = 0;                      // Make distance zero in case there's no ping echo for this sensor.
       sonar[currentSensor].ping_timer(echoCheck); // Do the ping (processing continues, interrupt will call echoCheck to look for echo).
     }
   }
@@ -175,27 +285,15 @@ void updateSonar() {
 
 //This function writes to the sonar data if the ping is received
 void echoCheck() { // If ping received, set the sensor distance to array.
-  if (sonar[currentSensor].check_timer())
-    cm[currentSensor] = sonar[currentSensor].ping_result / US_ROUNDTRIP_CM;
+  if (sonar[currentSensor].check_timer()) {
+
+    pingDistances[currentSensor] = (sonar[currentSensor].ping_result/ US_ROUNDTRIP_CM)*0.3937;
+
+
+  }
 }
 
-//This function prints the sonar data once all sonars have been read
-void oneSensorCycle() { // Sensor ping cycle complete, do something with the results.
-  // The following code would be replaced with your code that does something with the ping results.
-  for (uint8_t i = 0; i < SONAR_NUM; i++) {
-    //Serial.print(i);
-    //Serial.print(" = ");
-    //Serial.print(cm[i]);
-    //Serial.print(" cm\t");
-  }
-  srLeftAvg = cm[0];
-  srRightAvg = cm[1];
-  //  Serial.print("Left Sonar = ");
-  //  Serial.print(srLeftAvg);
-  //  Serial.print("\t\tRight Sonar = ");
-  //  Serial.print(srRightAvg);
-  //  Serial.println();
-}
+
 /*
    readIRLeft returns the value of the Left IR sensor in inches using our linearization formula
    we developed in the lab
@@ -256,13 +354,12 @@ double readIRBack() {
    readSonL returns the value of the Left sonar sensor in inches using our formula developed in
    the lab
 */
-double readSonL() {
-  unsigned int val = sonarL.ping();
-  val = 0.0071 * val - 0.2686;
-  if (val > cutoff) {
-    val = cutoff;
+double convertSonL(int leftSonarVal) {
+  double inches = 0.0071 * leftSonarVal - 0.2686;
+  if (inches > cutoff) {
+    inches = cutoff;
   }
-  return (val);
+  return (inches);
 }
 
 
@@ -270,16 +367,13 @@ double readSonL() {
    readSonR returns the value of the Right sonar sensor in inches using our formula developed in
    the lab
 */
-double readSonR() {
-  unsigned int val = sonarR.ping();
-  val = 0.0069 * val - 0.0544;
-  if (val > cutoff) {
-    val = cutoff;
+double convertSonR(int rightSonarVal) {
+  double inches = 0.0069 * rightSonarVal - 0.0544;
+  if (inches > cutoff) {
+    inches = cutoff;
   }
-  return (val);
+  return (inches);
 }
-
-
 
 
 /*
@@ -310,4 +404,87 @@ void resetLED(void) {
   digitalWrite(redLED, LOW);  //reset the red LED
   digitalWrite(ylwLED, LOW);  //reset the yellow LED
   digitalWrite(grnLED, LOW);  //reset the green LED
+}
+
+/*
+   spin() turns the robot in a spin about the point in the center between its wheels.
+*/
+void spin(char dir, int theta, int spd) {
+  double dist;  //the distance that the robot should mobe in inches
+  int neg;      //the direction the right wheel should move
+  if (dir == 'L')
+    neg = -1;    //move left
+  else
+    neg = 1;   //move right
+  dist = theta * PI / 180.0 * w / 2.0; //calculate the distance to make the theta turn
+  spd = convertStp(spd);         //convert speeds from input to steps/sec
+  dist = convertStp(dist);       //convert distances from inches to steps
+  stepperLeft.move(-neg * dist); //set stepper distance
+  stepperRight.move(neg * dist); //set stepper distance
+  stepperLeft.setMaxSpeed(spd);  //set stepper speed
+  stepperRight.setMaxSpeed(spd); //set stepper speed
+  runToStop();                   //move to the desired position
+  angle += neg * theta;
+}
+
+
+/*
+    drive() moves the robot straight at the speed recieved from its input.
+*/
+void drive(int dist, int spd) {
+  spd = convertStp(spd);          //convert speeds from input to steps/sec]
+  xPos += dist * cos(angle * PI / 180.0);
+  yPos += dist * sin(angle * PI / 180.0);
+  dist = convertStp(dist);        //convert distances from inches to steps
+  stepperLeft.move(-dist);         //set stepper distance
+  stepperRight.move(-dist);        //set stepper distance
+  stepperLeft.setMaxSpeed(spd);   //set stepper speed
+  stepperRight.setMaxSpeed(spd);  //set stepper speed
+  runToStop();                    //move to the desired position
+}
+
+
+/*
+   runToStop runs both the right and left stepper until they stop moving
+*/
+void runToStop ( void ) {
+  int runL = 1;   //state variabels
+  int runR = 1;   //state variables
+  while (runL || runR) {        //until both stop
+    if (!stepperRight.run()) {  //step the right stepper, if it is done moving set runR = 0
+      runR = 0;                 //left done moving
+    }
+    if (!stepperLeft.run()) {   //step the left stepper, if it is done moving set runL = 0
+      runL = 0;                 //right done moving
+    }
+  }
+}
+
+/*
+  convert a value from inches/XX to steps/XX or the right wheel
+
+  val is a value with units of inches/XX
+*/
+int convertStp (double val) {
+  int ans = (int) ceil(val / dstStep); //conversion factor
+  return ans;   //return ans
+}
+
+
+//This function prints the sonar data once all sonars have been read
+void oneSensorCycle() { // Sensor ping cycle complete, do something with the results.
+  // The following code would be replaced with your code that does something with the ping results.
+  // for (uint8_t i = 0; i < SONAR_NUM; i++) {
+  //Serial.print(i);
+  //Serial.print(" = ");
+  //Serial.print(cm[i]);
+  //Serial.print(" cm\t");
+  //}
+  //srLeft = pingDistances[0];
+  //srRight = pingDistances[1];
+  //  Serial.print("Left Sonar = ");
+  //  Serial.print(srLeft);
+  //  Serial.print("\t\tRight Sonar = ");
+  //  Serial.print(srRight);
+  //  Serial.println();
 }
