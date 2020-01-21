@@ -11,10 +11,10 @@
 #define stepperEnFalse true //variable for disabling stepper motor
 
 // IR Definitions
-#define irF 2       
-#define irR 3       
-#define irB 0       
-#define irL 1       
+#define irB 0       //back IR
+#define irL 1       //left IR
+#define irF 2       //front IR
+#define irR 3       //right IR
 
 // Stepper Library Default Speeds
 #define speedD 300         //default speed
@@ -33,7 +33,7 @@
 #define cutoff 9           //cutoff for reading IR sensor values
 #define avoidThresh 2
 
-#define timer_int 500000    // timer interrupt interval in microseconds
+#define timer_int 100000    // timer interrupt interval in microseconds
 #define timer_rate = 1/(timer_int*0.000001);
 
 //constants for PD control
@@ -123,10 +123,10 @@ void loop() {
 */
 void drive() {
   if (stepperRight.runSpeed()) {
-    stepperRight.move(updateDist);
+    stepperRight.move(stepperRight.speed());
   }
   if (stepperLeft.runSpeed()) {
-    stepperLeft.move(updateDist);
+    stepperLeft.move(stepperLeft.speed());
   }
   drive();
 }
@@ -189,7 +189,9 @@ void updateState() {
 void randomWanderState() {
   resetLED();
   setLED("R");
-
+  // give the radius the chance to change using the random() function
+  r = random(25)-12;
+  updateSpeed();
   state = randomWander;
 }
 
@@ -200,7 +202,7 @@ void followLeftState() {
   error = irLeft - 5.0;
   r = 1 / (Kp * error);
 
-  updateSpeed(r);
+  updateSpeed();
 
   state = followLeft;
 }
@@ -212,7 +214,7 @@ void followCenterState() {
   error = irRight - irLeft;
   r = 1 / (Kp * error);
 
-  updateSpeed(r);
+  updateSpeed();
 
   state = followCenter;
 
@@ -226,7 +228,7 @@ void followRightState() {
   error = 5.0 - irRight;
   r = 1 / (Kp * error);
 
-  updateSpeed(r);
+  updateSpeed();
 
   state = followRight;
 }
@@ -239,11 +241,44 @@ void collideState() {
 }
 
 void avoidObstacleState() {
+  double spdL = 0;  //left wheel speed
+  double spdR = 0;  //right wheel speed
+
+  // LED logic
   resetLED();
   setLED("GY");
+  
+  // Check which sensors are triggered
+  boolean F = (irFront <= avoidThresh);   //check front ir sensor
+  boolean B = (irBack  <= avoidThresh);   //check back ir sensor
+  boolean R = (irRight <= avoidThresh);   //check right ir sensor
+  boolean L = (irLeft  <= avoidThresh);   //check left ir sensor
 
+  // Logic to determine the best movement to take
+  if(F) {
+    spdL = spdR - speedD/2;
+    spdR = spdL - speedD/2;
+  }
+  if(B) {
+    spdL = spdL + speedD/2;
+    spdR = spdR + speedD/2;
+  }
+  if (R) {
+    spdL = spdL - speedD/2;
+    spdR = spdR + speedD/2;
+  }
+  if (L) {
+    spdL = spdL + speedD/2;
+    spdR = spdR - speedD/2;
+  }
+
+  // Set movement speeds on each stepper
+  stepperLeft.setSpeed(spdL);
+  stepperRight.setSpeed(spdR);
+  
   state = avoidObstacle;
 }
+
 
 /*
    readIRRight returns the value of the right IR sensor in inches
@@ -271,7 +306,7 @@ double readIRLeft() {
 }
 
 
-double updateSpeed(double r) {
+double updateSpeed() {
   if (abs(r) >=  150) {
     stepperLeft.setSpeed(speedD*(r/abs(r)));
     stepperRight.setSpeed(speedD*(r/abs(r)));

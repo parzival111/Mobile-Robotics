@@ -41,7 +41,6 @@ const int cutoff = 20;                // max value for sonar
 int isStop = 0;                       //variable for whether the robot is stopped
 int count = 0;                        //value to see number of times it does not see a wall for bangBang to abort back into drive straight
 char currentCoord = 'X';              //current coordinate that the robot should try to match
-byte flag = 0;                        //flag to let the state know the interupt has been triggered
 
 // position tracking
 double xPos = 0;                      //x position of the robot
@@ -149,9 +148,6 @@ void setup() {
 }
 
 void loop() {
-  if (flag = 1) {
-    updateState();
-  }
 
   stepperRight.runSpeed();
   stepperLeft.runSpeed();
@@ -160,7 +156,6 @@ void loop() {
 }
 
 void updateState() {
-  flag = 0;
   //Serial.println(irFront);
   //Serial.println(thresh);
   if (irFront < thresh) {
@@ -226,9 +221,9 @@ void rightSonarState() {
 
 void updateSensor() {
   //Serial.println("check");
-  flag = 1;
   updateIR();
   updateSonar();
+  updateState();
 }
 
 
