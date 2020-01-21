@@ -1,3 +1,7 @@
+
+
+
+
 #include <TimerOne.h>       //include library for timers with interrupts
 #include <AccelStepper.h>   //include the stepper motor library
 #include <MultiStepper.h>   //include multiple stepper motor library
@@ -10,10 +14,10 @@
 #define stepperEnable 48    //stepper enable pin on stepStick 
 
 // IR Definitions
-#define irF 0       //back IR
-#define irR 1       //left IR
-#define irB 2       //front IR
-#define irL 3       //right IR
+#define irB 0       //back IR
+#define irL 1       //left IR
+#define irF 2       //front IR
+#define irR 3       //right IR
 
 // Stepper Library Default Speeds
 #define speedD 2000         //default speed
@@ -104,11 +108,9 @@ void setup() {
   steppers.addStepper(stepperLeft);               //add left motor to MultiStepper steppers
   digitalWrite(stepperEnable, stepperEnTrue);     //turns on the stepper motor driver
 
-
   //Timer Interrupt Set Up
   Timer1.initialize(timer_int);                   // initialize timer1, and set a timer_int second period
   Timer1.attachInterrupt(updateSensors);           // attaches updateIR() as a timer overflow interrupt
-
 
   delay(pauseTime);                               //delay before the robot moves
 
@@ -122,11 +124,10 @@ void loop() {
   }
 
   drive();
-
 }
 
 /*
-   drive() function recurcively calls itself and makes sure that our drive motors are always moving
+ * drive() function recurcively calls itself and makes sure that our drive motors are always moving
 */
 void drive() {
   if (stepperRight.runSpeed()) {
@@ -138,22 +139,10 @@ void drive() {
   drive();
 }
 
-
-
 /*
-   drive() function recurcively calls itself and makes sure that our drive motors are always moving
-*/
-void drive() {
-  if (stepperRight.runSpeed()) {
-    stepperRight.move(updateDist);
-  }
-  if (stepperLeft.runSpeed()) {
-    stepperLeft.move(updateDist);
-  }
-  drive();
-}
-
-
+ * 
+ * 
+ */
 void updateSensors() {
   flag = 1;
 
@@ -165,7 +154,7 @@ void updateSensors() {
   //  print IR data
   //    Serial.println("frontIR\tbackIR\tleftIR\trightIR");
   //    Serial.print(irFront); Serial.print("\t");
-  //    Serial.print(irRear); Serial.print("\t");
+  //    Serial.print(irBack); Serial.print("\t");
   //    Serial.print(irLeft); Serial.print("\t");
   //    Serial.println(irRight);
 }
@@ -207,12 +196,20 @@ void updateState() {
 
 }
 
+
+/*
+ * 
+ */
 void randomWanderState() {
   resetLED();
   setLED("R");
-
+  // give the radius the chance to change using the random() function
+  r = r + (Random(10) - 5);
+  updateSpeed();
   state = randomWander;
 }
+
+
 
 void followLeftState() {
   resetLED();
@@ -225,6 +222,7 @@ void followLeftState() {
 
   state = followLeft;
 }
+
 
 void followCenterState() {
   resetLED();
@@ -255,11 +253,61 @@ void collideState() {
 }
 
 void avoidObstacleState() {
+  double spdL = 0;  //left wheel speed
+  double spdR = 0;  //right wheel speed
+
+  // LED logic
   resetLED();
   setLED("GY");
+  
+  // Check which sensors are triggered
+  F = irFront <= avoidThresh;   //check front ir sensor
+  B = irBack  <= avoidThresh;   //check back ir sensor
+  R = ifRight <= avoidThresh;   //check right ir sensor
+  L = irLeft  <= avoidThresh;   //check left ir sensor
 
+  // Logic to determine the best movement to take
+  if(F) {
+    spdL = spdR - spdD/2;
+    spdR = spdL - spdD/2;
+  }
+  if(B) {
+    spdL = spdL + spdD/2;
+    spdR = spdR + spdD/2;
+  }
+  if (R) {
+    spdL = spdL - spdD/2;
+    spdR = spdR + spdD/2;
+  }
+  if (L) {
+    spdL = spdL + spdD/2;
+    spdR = spdR - spdD/2;
+  }
+
+  // Set movement speeds on each stepper
+  stepperLeft.setSpeed(spdL);
+  stepperRight.setSpeed(spdR);
+  
   state = avoidObstacle;
 }
+
+
+double updateSpeed() {
+  if (abs(r) >=  150) {
+    stepperLeft.setSpeed = speedD;
+    stepperRight.setSpeed = speedD;
+
+  } else if (abs(r) <= 5) {
+    stepperLeft.setSpeed = speedD * (-r / abs(r));
+    stepperRight.setSpeed = speedD * (r / abs(r));
+  }
+  else {
+    stepperLeft.setSpeed = speedD * (abs(r - (w / 2)) / abs(r));
+    stepperRight.setSpeed = speedD * (abs(r + (w / 2)) / abs(r));
+  }
+}
+
+
 /*
    readIRRight returns the value of the right IR sensor in inches
 */
@@ -286,21 +334,6 @@ double readIRLeft) {
 }
 
 
-double convertToSpeed(double r) {
-  if (r >=  150) {
-    stepperLeft.setSpeed = speedD;
-    stepperRight.setSpeed = speedD;
-
-  } else if (r <= 5) {
-    stepperLeft.setSpeed = speedD * (-r / abs(r));
-    stepperRight.setSpeed = speedD * (r / abs(r));
-  }
-
-  stepperLeft.setSpeed = speedD * (abs(r - (w / 2)) / abs(r));
-  stepperRight.setSpeed = speedD * (abs(r + (w / 2)) / abs(r));
-}
-
-
 /*
    readIRFront returns the value of the front IR sensor in inches
 */
@@ -316,7 +349,7 @@ double readIRFront() {
 /*
    readIRBack returns the value of the back IR sensor in inches
 */
-double readIRBront() {
+double readIRBack() {
   double A = analogRead(irB);               //read the sensor value
   double val = (1072.0 / (A + 1.0)) - 0.38; //use our calculated equations to change from analog to inches
   if (val > cutoff) {
