@@ -17,8 +17,8 @@
 #define irR 3       //right IR
 
 // Stepper Library Default Speeds
-#define speedD 800          //default speed
-#define accelD 1200         //default acceleration
+#define speedD 400         //default speed
+#define accelD 800        //default acceleration
 #define updateDist 12800    //
 
 // LED Pin Definitions
@@ -31,15 +31,16 @@
 
 // Sensor reading values
 //#define cutoff 9            //cutoff for reading IR sensor values
-#define avoidThresh 2
-#define Cutoff 9
+#define avoidThresh 2         //threshold for avoidObstacle behavior
+#define Cutoff 10             //cutoff for sensors
+#define colThresh 5           //threshold for collide behavior
 
 #define timer_rate 20                  // sensor update calls per second
-#define timer_int 1000000/timer_rate  // timer interrupt interval in microseconds
+#define timer_int 1000000/timer_rate   // timer interrupt interval in microseconds
 
 //constants for PD control
-#define Kp  0.1
-//#define Kd  0.01
+#define Kp  0.05
+#define Kd  0.005
 
 // states of the robot
 #define randomWander 1
@@ -68,13 +69,16 @@ double irLeft = 20;                   //variable to hold average of current left
 double irRight = 20;                  //variable to hold average of current right IR reading
 
 // states variables for the robot
-byte state = 0;                       //variable to tell what state the robot is in
+byte state = 1;                       //variable to tell what state the robot is in
+byte lastState = state;               //variable to tell what the last state the robot was in
 unsigned int stateCount = 0;          //variable to count state machine calls
+int lostStates = 0;                   //variable to count time since the last state change
+int collideCount = 0;                 //variable to count times collide() has been ran in a row
 
 // variables for speed the robot wheels turn
-double error = 0;                      //diference that is inputted to controller
-//double derror = 0;                   //rate of change of deference between current and desired
-
+double error = 0;                     //difference that is inputted to controller
+double avgDErr = 0;                   //
+double lastErr = 0;                   //
 
 /*******************************INITIALIZE***********************************************/
 // Stepper Setup
@@ -139,134 +143,159 @@ void drive() {
 void updateSensors() {
 
   irFront = readIRFront();    //read front IR
-  irBack = readIRBack();     //read back IR
-  irLeft = readIRLeft();     //read left IR
+  irBack = readIRBack();      //read back IR
+  irLeft = readIRLeft();      //read left IR
   irRight = readIRRight();    //read right IR
 
   updateState();
-
-  //  print IR data
-  //    Serial.println("frontIR\tbackIR\tleftIR\trightIR");
-  //    Serial.print(irFront); Serial.print("\t");
-  //    Serial.print(irRear); Serial.print("\t");
-  //    Serial.print(irLeft); Serial.print("\t");
-  //    Serial.println(irRight);
 }
 
 
 /*
-  randomWander = 1;
-  followLeft = 2;
-  followCenter = 3;
-  followRight = 4;
-  collide = 5;
-  avoidObstacle = 6;
+  randomWander = 1;   R
+  followLeft = 2;     Y
+  followCenter = 3;   YR
+  followRight = 4;    G
+  collide = 5;        GR
+  avoidObstacle = 6;  GY
 */
 void updateState() {
   stateCount ++;
-  
+  lostStates ++;
+  lastErr = error;
+
   if (irFront <= avoidThresh || irBack <= avoidThresh || irLeft <= avoidThresh || irRight <= avoidThresh) {
     avoidObstacleState();
-
-  } else if ( irFront < Cutoff) {
+    lostStates = 0;
+  }
+  else if ( irFront < colThresh || state == collide) {
     collideState();
-
-  } else if (irLeft < Cutoff && irRight < Cutoff) {
+    lostStates = 0;
+  }
+  else if (irLeft < Cutoff & irRight < Cutoff) {
     followCenterState();
-
-  } else if (irLeft < Cutoff) {
+    lostStates = 0;
+  }
+  else if (irLeft < Cutoff) {
     followLeftState();
-
-  } else if (irRight < Cutoff) {
+    lostStates = 0;
+  }
+  else if (irRight < Cutoff) {
     followRightState();
-
-  } else if (irFront >= Cutoff && irLeft >= Cutoff && irRight >= Cutoff) {
+    lostStates = 0;
+  }
+  else if (lostStates > 50 || state == randomWander) {
     randomWanderState();
-
-  } else {   // catch in case we do not go to a defined state
-    resetLED();
+    lostStates = 0;
+  }
+  else if (state == followLeft) {
+    followLeftState();
+  }
+  else if (state == followRight) {
+    followRightState();
+  }
+  else {
     setLED("GYR");
   }
-
 }
+
 
 void randomWanderState() {
   resetLED();
   setLED("R");
   // give the radius the chance to change using the random() function
-  double x = random(-30,30);
-  if (stateCount % timer_rate == 0){
-    X = x/100;
-    Serial.println(X);
+  double x = random(-30, 30);
+  if (stateCount % 2*timer_rate == 0) {
+    X = x / 100;
     Y = 1;
     updateSpeed();
   }
+  lastState = state;
   state = randomWander;
 }
+
 
 void followLeftState() {
   resetLED();
   setLED("Y");
 
-  double e = irLeft - 5.0;
-  X = Kp * e;
+  error = irLeft - 5.0;
+  avgDErr = (avgDErr * 0.75 + (error-lastErr))/1.75;
+  X = Kp * error + Kd * avgDErr;
+  Y = 1;
 
   updateSpeed();
 
+  lastState = state;
   state = followLeft;
 }
+
 
 void followCenterState() {
   resetLED();
   setLED("YR");
 
-  double e = irRight - irLeft;
-  X = Kp * e;
+  error = irLeft - irRight;
+  avgDErr = (avgDErr * 0.75 + (error-lastErr))/1.75;
+  X = Kp * error + Kd * avgDErr;
+  Y = 1;
 
   updateSpeed();
 
+  lastState = state;
   state = followCenter;
-
-
 }
+
 
 void followRightState() {
   resetLED();
   setLED("G");
 
-  double e = 5.0 - irRight;
-  X = Kp * e;
+  error = 5.0 - irRight;
+  avgDErr = (avgDErr * 0.75 + (error-lastErr))/1.75;
+  X = Kp * error + Kd * avgDErr;
+  Y = 1;
 
   updateSpeed();
 
+  lastState = state;
   state = followRight;
 }
 
+
 void collideState() {
-  double e = 0;
+  collideCount ++;
   resetLED();
   setLED("GR");
+  if(state != collide){
+    lastState = state;
+    state = collide;
+  }
 
-  if (state == followLeft) {
-    e = (Cutoff / irFront);
-    X = Kp * e;
+  if (lastState == followLeft || state == followLeft) {
+    X = 1;
+    Y = 0;
+  }
+  else {
+    X = -1;
+    Y = 0;
+  }
 
-    updateSpeed();
-    
-  } else if (state == followRight) {
-    e = (Cutoff / irFront);
-    X = Kp * e;
+  updateSpeed();
 
-    updateSpeed();
-
-  } else {
-    e = (Cutoff / irFront);
-    X = Kp * e;
-
-    state = followLeft;
-    updateSpeed();
+  if (irFront < colThresh){
+    collideCount = 0;
+    state = collide;
+  }
+  else if (collideCount < 10){
+    state = collide;
+  }
+  else {
+    state = lastState;
+    collideCount = 0;
   }
 }
+
 
 void avoidObstacleState() {
   double spdL = 0;  //left wheel speed
@@ -275,57 +304,44 @@ void avoidObstacleState() {
   // LED logic
   resetLED();
   setLED("GY");
-  
+
   // Check which sensors are triggered
   boolean F = (irFront <= avoidThresh);   //check front ir sensor
   boolean B = (irBack  <= avoidThresh);   //check back ir sensor
-  boolean R = (irRight <= avoidThresh);   //check right ir sensor
-  boolean L = (irLeft  <= avoidThresh);   //check left ir sensor
+  boolean R = (irRight <= Cutoff);        //check right ir sensor
+  boolean L = (irLeft  <= Cutoff);        //check left ir sensor
 
   // Logic to determine the best movement to take
-  if(F) {
-    spdL = spdR - speedD/2;
-    spdR = spdL - speedD/2;
+  if (F) {
+    Y = -1;
   }
-  if(B) {
-    spdL = spdL + speedD/2;
-    spdR = spdR + speedD/2;
+  if (B) {
+    Y = 1;
   }
   if (R) {
-    spdL = spdL - speedD/2;
-    spdR = spdR + speedD/2;
+    X = -0.5;
   }
   if (L) {
-    spdL = spdL + speedD/2;
-    spdR = spdR - speedD/2;
+    X = 0.5;
   }
 
   // Set movement speeds on each stepper
-  stepperLeft.setSpeed(spdL);
-  stepperRight.setSpeed(spdR);
-  
+  updateSpeed();
+
+  lastState = state;
   state = avoidObstacle;
 }
 
 
 
 double updateSpeed() {
-  int spdL = Y*speedD/2 + X*speedD;
-  int spdR = Y*speedD/2 - X*speedD;
+  int spdL = Y * speedD / 2 + X * speedD;
+  int spdR = Y * speedD / 2 - X * speedD;
+
   stepperLeft.setSpeed(spdL);
   stepperRight.setSpeed(spdR);
   stepperLeft.setMaxSpeed(spdL);
   stepperRight.setMaxSpeed(spdR);
-  
-  Serial.print(X);
-  Serial.print(" | R: ");
-  Serial.print(stepperRight.speed());
-  Serial.print(" | ");
-  Serial.print(spdR);
-  Serial.print(" | L: ");
-  Serial.print(stepperLeft.speed());
-  Serial.print(" | ");
-  Serial.println(spdL);
 }
 
 
@@ -379,6 +395,8 @@ double readIRBack() {
   }
   return (val);
 }
+
+
 
 /*
    setLED recieves a string including the characters of LEDs that should be turned on.
