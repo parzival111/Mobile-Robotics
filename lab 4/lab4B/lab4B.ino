@@ -132,8 +132,8 @@ double error = 0;                     //difference that is inputted to controlle
 double lastErr = 0;                   //
 
 // variables for keeping track of position
-double x = 0;                         // x position
-double y = 0;                         // y position
+double xPos = 0;                         // x position
+double yPos = 0;                         // y position
 double angle = 0;                     // heading
 
 // variable for whether we have executed the light behavior
@@ -236,9 +236,6 @@ void updateSensors() {
 
     updateState();              //update state logic for the robot
   }
-  Serial.print(photoRight);
-  Serial.print(" | ");
-  Serial.println(photoLeft);
 }
 
 
@@ -266,6 +263,7 @@ void updateState() {
     // goToLight();
     state = lightFound;
     setLED("GYR");
+    resetSteppers();
   }
   // avoidObstacleState() is called if any of the sensors have a reading below the avoidThresh (2in)
   else if (irFront <= avoidThresh || irBack <= avoidThresh || irLeft <= avoidThresh || irRight <= avoidThresh) {
@@ -314,11 +312,6 @@ void updateState() {
 }
 
 /************************************STATE*LOGIC***************************************/
-/*
-
-*/
-
-
 /*
    randomWanderState() function creates a random turn (X) vector between -0.3 and 0.3 for the robot to turn randomly. This vector only changes every 2 seconds
 */
@@ -473,7 +466,7 @@ void avoidObstacleState() {
     X = 0.5 * Y;
   }
   if (L) {  //if there is an obstacle to the left, turn right
-    X = -0.25 * Y;
+    X = -0.5 * Y;
   }
 
   // Set movement speeds on each stepper
@@ -486,19 +479,29 @@ void avoidObstacleState() {
 }
 
 
-double readPhRight() {
+void resetSteppers(){
+  stepperRight.setSpeed(0);
+  stepperRight.setMaxSpeed(0);
+  stepperRight.setAcceleration(accelD);
+  stepperRight.setCurrentPosition(0);
+  stepperLeft.setSpeed(0);
+  stepperLeft.setMaxSpeed(0);
+  stepperLeft.setAcceleration(accelD);
+  stepperLeft.setCurrentPosition(0);
+}
+
+void readPhRight() {
   photoRight = analogRead(rtPhotoResist);
   if (photoRight < lightThresh) {
     photoRight = lightThresh;
   }
 }
 
-double readPhLeft() {
+void readPhLeft() {
   if (photoLeft < lightThresh) {
     photoLeft = lightThresh;
   }
 }
-
 
 /*
    readIRRight returns the value of the right IR sensor in inches
@@ -550,7 +553,35 @@ double readIRBack() {
   return (val);
 }
 
+/*
+    drive() moves the robot straight at the speed recieved from its input.
+*/
+void drive(int dist) {
+  xPos += dist * cos(angle * PI / 180.0);
+  yPos += dist * sin(angle * PI / 180.0);
+  dist = convertStp(dist);          //convert distances from inches to steps
+  stepperLeft.move(dist);           //set stepper distance
+  stepperRight.move(dist);          //set stepper distance
+  stepperLeft.setMaxSpeed(speedD);  //set stepper speed
+  stepperRight.setMaxSpeed(speedD); //set stepper speed
+  runToStop();                      //move to the desired position
+}
 
+/*
+   runToStop runs both the right and left stepper until they stop moving
+*/
+void runToStop ( void ) {
+  int runL = 1;   //state variabels
+  int runR = 1;   //state variables
+  while (runL || runR) {        //until both stop
+    if (!stepperRight.run()) {  //step the right stepper, if it is done moving set runR = 0
+      runR = 0;                 //left done moving
+    }
+    if (!stepperLeft.run()) {   //step the left stepper, if it is done moving set runL = 0
+      runL = 0;                 //right done moving
+    }
+  }
+}
 
 /*
    setLED recieves a string including the characters of LEDs that should be turned on.
