@@ -66,7 +66,7 @@
 #define accelD 4000          //default acceleration
 
 // LED Pin Definitions
-#define redLED 4            //red LED for displaying states
+#define redLED 5            //red LED for displaying states
 #define ylwLED 6            //green LED for displaying states
 #define grnLED 7            //yellow LED for displaying states
 
