@@ -87,7 +87,11 @@
 
 //constants for PD control
 #define Kp  0.05      // Kp constant for position control
-#define Kd  0.005     // Kd constant for derivative control
+
+//constants for the goToLight behavior
+#define spinDist 5        // distance to spin to look for the light in degrees
+#define driveDist 2       // distance to drive before checking for the light
+#define lightDist 2       // distance to the light before we turn around
 
 // states of the robot
 #define randomWander 1    // random wander state
@@ -121,23 +125,24 @@ double photoLeft = 600;               //variable to hold left photoResistor read
 double photoRight = 600;              //variable to hold right photoResistor reading
 
 // states variables for the robot
-byte state = 1;                       //variable to tell what state the robot is in
+byte state = 0;                       //variable to tell what state the robot is in
 byte lastState = state;               //variable to tell what the last state the robot was in
 unsigned int stateCount = 0;          //variable to count state machine calls
 int lostStates = 0;                   //variable to count time since the last state change
 int collideCount = 0;                 //variable to count times collide() has been ran in a row
+boolean isMoving = false;             //variable to keep track of non-continuous movement commands
+boolean lightHasFound = false;
 
 // variables for speed the robot wheels turn
 double error = 0;                     //difference that is inputted to controller
 double lastErr = 0;                   //
 
 // variables for keeping track of position
-double xPos = 0;                         // x position
-double yPos = 0;                         // y position
-double angle = 0;                     // heading
-
-// variable for whether we have executed the light behavior
-boolean foundLight = 0;
+double xPos = 0;                          // x position
+double yPos = 0;                          // y position
+double angle = 0;                         // heading
+int movementCount = 0;                    // counter for how many times goToLight() has been executed;
+double angles[128];
 
 /*******************************INITIALIZE***********************************************/
 // Stepper Setup
@@ -170,7 +175,7 @@ void setup() {
 
   //Timer Interrupt Set Up
   Timer1.initialize(timer_int);                   // initialize timer1, and set a timer_int second period
-  Timer1.attachInterrupt(updateSensors);           // attaches updateIR() as a timer overflow interrupt
+  Timer1.attachInterrupt(updateSensors);           // attaches updateSensors() as a timer overflow interrupt
 
   delay(pauseTime);                               //delay before the robot moves
 
@@ -178,11 +183,14 @@ void setup() {
 
 /**************************************LOOP**********************************************/
 void loop() {
-  if (state != lightFound || foundLight) {
-    drive();
+  if (state == collide) {
+    collideState();
+  }
+  else if (state == lightFound) {
+    goToLight();
   }
   else {
-    //dock();
+    drive();
   }
 }
 
@@ -224,16 +232,20 @@ double updateSpeed() {
    allow our state machine to update the movement of our robot
 */
 void updateSensors() {
-  //ignore the interrupt if we are currently tracking the light
-  if (state != lightFound) {
-    irFront = readIRFront();    //read front IR
-    irBack = readIRBack();      //read back IR
-    irLeft = readIRLeft();      //read left IR
-    irRight = readIRRight();    //read right IR
+  irFront = readIRFront();    //read front IR
+  irBack = readIRBack();      //read back IR
+  irLeft = readIRLeft();      //read left IR
+  irRight = readIRRight();    //read right IR
 
-    readPhLeft();  //read left photo resistor
-    readPhRight(); //read right photo resistor
+  readPhLeft();  //read left photo resistor
+  readPhRight(); //read right photo resistor
 
+  Serial.print("checking state :");
+  Serial.println(state);
+  
+  //ignore the state changes if we are currently tracking the light
+  //ignore the state changes if we are currently moving in a non-continuous movement command
+  if (state != lightFound && !isMoving) {
     updateState();              //update state logic for the robot
   }
 }
@@ -243,6 +255,7 @@ void updateSensors() {
    updateState() checks several logic conditions in order to determine the new state that the robot should move to.
 
    The possible states are as follows:
+   firstState = 0;
    randomWander = 1;
    followLeft = 2;
    followCenter = 3;
@@ -256,14 +269,11 @@ void updateState() {
   lostStates ++;    //increment lost state counter
   lastErr = error;  //reset the lastErr tracker with the current value of error
 
-  Serial.println(state);
-
   // goToLight is called when either photoResistor reading passes lightThresh
-  if (photoLeft > lightThresh || photoRight > lightThresh) {
-    // goToLight();
-    state = lightFound;
+  if (photoLeft > lightThresh || photoRight > lightThresh && !lightHasFound) {
     setLED("GYR");
-    resetSteppers();
+    reset();            //reset our current position to [0,0] so the robot can return here
+    state = lightFound;
   }
   // avoidObstacleState() is called if any of the sensors have a reading below the avoidThresh (2in)
   else if (irFront <= avoidThresh || irBack <= avoidThresh || irLeft <= avoidThresh || irRight <= avoidThresh) {
@@ -273,7 +283,7 @@ void updateState() {
   // collideState() is called if the either the front IR sensor reads below the colThresh or if the state is currently collide.
   // this allows the collide state to conntinue affecting the movement after its initial state conditions are removed.
   else if ( irFront < colThresh || state == collide) {
-    collideState();
+    state = collide;
     lostStates = 0;
   }
   // followCenterState() is called if both the left and right sensors have readings below the cutoff threshold.
@@ -293,7 +303,8 @@ void updateState() {
   }
   // if we have not seen a wall in 50 state cycles, call randomWanderState().
   // if we are already in randomWander, call randomWanderState().
-  else if (lostStates > 50 || state == randomWander) {
+  // if we are starting the program, call randomWanderState().
+  else if (lostStates > 50 || state == randomWander || state == 0) {
     randomWanderState();
     lostStates = 0;
   }
@@ -311,6 +322,70 @@ void updateState() {
   }
 }
 
+/************************************LIGHT*FOLLOWING***********************************/
+/*
+   goToLight()
+*/
+void goToLight() {
+  updateSensors();    //update sensor information
+  int spinSum = 0;    //variable to keep track of how much we turn towards the light
+
+  //spin past the light
+  if (photoLeft > photoRight) {
+    while (photoLeft > photoRight && irFront > lightDist) {
+      spin('L', -spinDist);
+      spinSum += -spinDist;
+      updateSensors();
+    }
+  }
+  else if (photoRight > photoLeft) {
+    while (photoRight > photoLeft && irFront > lightDist) {
+      spin('L', spinDist);
+      spinSum += spinDist;
+      updateSensors();
+    }
+  }
+
+  // update the turn angle that we just turned
+  angles[movementCount] = spinSum;
+
+  // move torwards the light
+  if (irFront > lightDist) {
+    drive(driveDist);
+  }
+
+  // Check to see if we are at our goal
+  if (irFront < lightDist) {
+    atGoal();
+  }
+  else {
+    movementCount ++;
+    goToLight();
+  }
+}
+
+
+void atGoal() {
+  delay(1000);
+  spin('L', 180);
+  delay(1000);
+  returnHome();
+}
+
+void returnHome() {
+  if (movementCount < 0) {
+    state = lastState;
+    spin('L', 180);
+    lightHasFound = true;
+  }
+  else {
+    spin('R', angles[movementCount]);
+    drive(driveDist);
+    movementCount --;
+    returnHome();
+  }
+}
+
 /************************************STATE*LOGIC***************************************/
 /*
    randomWanderState() function creates a random turn (X) vector between -0.3 and 0.3 for the robot to turn randomly. This vector only changes every 2 seconds
@@ -319,9 +394,8 @@ void randomWanderState() {
   // led control
   resetLED();
   setLED("R");
-
   // randomWander movement control
-  if (stateCount % 2 * timer_rate == 0) {
+  if (stateCount % (2 * timer_rate) == 0 || state != randomWander) {
     double x = random(-30, 30);   //calculate a random value from -30 to 30
     X = x / 100;                  //scale X to fit within {-0.3, 0.3}
     Y = 1;                        //set Y to forward
@@ -403,8 +477,7 @@ void followRightState() {
    collideState() function tells the robot to spin to avoid an obstacle when faced with an obstacle in front of the robot.
 */
 void collideState() {
-  collideCount ++;  //increment counter for collide states.
-
+  Serial.println("Collide");
   // led control
   resetLED();
   setLED("GR");
@@ -417,31 +490,15 @@ void collideState() {
 
   //if we were following a wall on the left, spin right
   if (lastState == followLeft || state == followLeft) {
-    X = 1;
-    Y = 0;
+    spin('R', 90);
   }
   //default spin left
   else {
-    X = -1;
-    Y = 0;
+    spin('L', 90);
   }
 
-  updateSpeed();  //update wheel speeds
-
-  //stay in the collide state while the front sensor is triggered
-  if (irFront < colThresh) {
-    collideCount = 0;
-    state = collide;
-  }
-  //stay in the collide state for 10 cycles after the front sensor is triggered
-  else if (collideCount < 10) {
-    state = collide;
-  }
-  //resume the prior state after leaving collide
-  else {
-    state = lastState;
-    collideCount = 0;
-  }
+  state = lastState;
+  interrupts();
 }
 
 /*
@@ -479,7 +536,7 @@ void avoidObstacleState() {
 }
 
 
-void resetSteppers(){
+void reset() {
   stepperRight.setSpeed(0);
   stepperRight.setMaxSpeed(0);
   stepperRight.setAcceleration(accelD);
@@ -488,6 +545,10 @@ void resetSteppers(){
   stepperLeft.setMaxSpeed(0);
   stepperLeft.setAcceleration(accelD);
   stepperLeft.setCurrentPosition(0);
+  angle = 0;
+  xPos = 0;
+  yPos = 0;
+  memset(angles, 0, 128);
 }
 
 void readPhRight() {
@@ -498,6 +559,7 @@ void readPhRight() {
 }
 
 void readPhLeft() {
+  photoLeft = analogRead(lfPhotoResist);
   if (photoLeft < lightThresh) {
     photoLeft = lightThresh;
   }
@@ -561,10 +623,32 @@ void drive(int dist) {
   yPos += dist * sin(angle * PI / 180.0);
   dist = convertStp(dist);          //convert distances from inches to steps
   stepperLeft.move(dist);           //set stepper distance
-  stepperRight.move(dist);          //set stepper distance
+  stepperRight.move(dist);          //see stepper distance
   stepperLeft.setMaxSpeed(speedD);  //set stepper speed
   stepperRight.setMaxSpeed(speedD); //set stepper speed
   runToStop();                      //move to the desired position
+}
+
+/*
+   spin() turns the robot in a spin about the point in the center between its wheels.
+*/
+void spin(char dir, int theta) {
+  stepperRight.setSpeed(0);
+  stepperLeft.setSpeed(0);
+  double dist;  //the distance that the robot should mobe in inches
+  int neg;      //the direction the right wheel should move
+  if (dir == 'L')
+    neg = -1;    //move left
+  else
+    neg = 1;   //move right
+  dist = theta * PI / 180.0 * w / 2.0;  //calculate the distance to make the theta turn
+  dist = convertStp(dist);              //convert distances from inches to steps
+  stepperLeft.move(-neg * dist);        //set stepper distance
+  stepperRight.move(neg * dist);        //set stepper distance
+  stepperLeft.setMaxSpeed(speedD/2);      //set stepper speed
+  stepperRight.setMaxSpeed(speedD/2);     //set stepper speed
+  runToStop();                          //move to the desired position
+  angle += neg * theta;
 }
 
 /*
@@ -573,14 +657,16 @@ void drive(int dist) {
 void runToStop ( void ) {
   int runL = 1;   //state variabels
   int runR = 1;   //state variables
+  isMoving = true;
   while (runL || runR) {        //until both stop
     if (!stepperRight.run()) {  //step the right stepper, if it is done moving set runR = 0
-      runR = 0;                 //left done moving
+      runR = 0;                 //right done moving
     }
     if (!stepperLeft.run()) {   //step the left stepper, if it is done moving set runL = 0
-      runL = 0;                 //right done moving
+      runL = 0;                 //left done moving
     }
   }
+  isMoving = false;
 }
 
 /*
