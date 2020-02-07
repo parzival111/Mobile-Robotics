@@ -486,7 +486,8 @@ function mapSend_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 openArduino();
-x = get(
+sendMap();
+closeArduino();
 
 
 % --- Executes on button press in refreshMap.
@@ -623,6 +624,22 @@ function resetIR_Callback(hObject, eventdata, handles)
 % hObject    handle to resetIR (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+openArduino();
+i(1) = 0;
+while length(i) == 1
+    i(i) = fscanf(s);
+end
+i = 2;
+while length(i) == 2
+    i(i) = fscanf(s);
+end
+while length(i) == 3
+    i(i) = fscanf(s);
+end
+while length(i) == 4
+    i(i) = fscanf(s);
+end
+handle.irF = i(1);
 
 
 % --- Executes on button press in sendPath.
@@ -648,7 +665,24 @@ function closeArduino()
 fclose(s);
 
 function sendMap()
-serial.println()
+openArduino();
+fprintf(str2dbl(handle.map11,'String'));
+fprintf(str2dbl(handle.map12,'String'));
+fprintf(str2dbl(handle.map13,'String'));
+fprintf(str2dbl(handle.map14,'String'));
+fprintf(str2dbl(handle.map21,'String'));
+fprintf(str2dbl(handle.map22,'String'));
+fprintf(str2dbl(handle.map23,'String'));
+fprintf(str2dbl(handle.map24,'String'));
+fprintf(str2dbl(handle.map31,'String'));
+fprintf(str2dbl(handle.map32,'String'));
+fprintf(str2dbl(handle.map33,'String'));
+fprintf(str2dbl(handle.map34,'String'));
+fprintf(str2dbl(handle.map41,'String'));
+fprintf(str2dbl(handle.map42,'String'));
+fprintf(str2dbl(handle.map43,'String'));
+fprintf(str2dbl(handle.map44,'String'));
+closeArduino();
 
 
 

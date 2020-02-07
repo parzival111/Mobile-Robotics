@@ -624,7 +624,24 @@ function resetIR_Callback(hObject, eventdata, handles)
 % hObject    handle to resetIR (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
+openArduino();
+i(1) = zeros(4,1);
+while i(1) == 0
+    i(1) = fscanf(s)
+end
+while i(2) == 0
+    i(2) = fscanf(s)
+end
+while i(3) == 0
+    i(3) = fscanf(s)
+end
+while i(4) == 0
+    i(4) = fscanf(s)
+end
+handle.irF = i(1);
+handle.irR = i(2);
+handle.irB = i(3);
+handle.irL = i(4);
 
 % --- Executes on button press in sendPath.
 function sendPath_Callback(hObject, eventdata, handles)
