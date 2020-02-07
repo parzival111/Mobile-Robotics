@@ -22,7 +22,7 @@ function varargout = GUI_Test1(varargin)
 
 % Edit the above text to modify the response to help GUI_Test1
 
-% Last Modified by GUIDE v2.5 05-Feb-2020 11:46:12
+% Last Modified by GUIDE v2.5 06-Feb-2020 14:30:33
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -113,18 +113,18 @@ end
 
 
 
-function edit2_Callback(hObject, eventdata, handles)
-% hObject    handle to edit2 (see GCBO)
+function map13_Callback(hObject, eventdata, handles)
+% hObject    handle to map13 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit2 as text
-%        str2double(get(hObject,'String')) returns contents of edit2 as a double
+% Hints: get(hObject,'String') returns contents of map13 as text
+%        str2double(get(hObject,'String')) returns contents of map13 as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function edit2_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit2 (see GCBO)
+function map13_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to map13 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -136,18 +136,18 @@ end
 
 
 
-function edit3_Callback(hObject, eventdata, handles)
-% hObject    handle to edit3 (see GCBO)
+function map12_Callback(hObject, eventdata, handles)
+% hObject    handle to map12 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit3 as text
-%        str2double(get(hObject,'String')) returns contents of edit3 as a double
+% Hints: get(hObject,'String') returns contents of map12 as text
+%        str2double(get(hObject,'String')) returns contents of map12 as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function edit3_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit3 (see GCBO)
+function map12_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to map12 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -159,18 +159,18 @@ end
 
 
 
-function edit4_Callback(hObject, eventdata, handles)
-% hObject    handle to edit4 (see GCBO)
+function map11_Callback(hObject, eventdata, handles)
+% hObject    handle to map11 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit4 as text
-%        str2double(get(hObject,'String')) returns contents of edit4 as a double
+% Hints: get(hObject,'String') returns contents of map11 as text
+%        str2double(get(hObject,'String')) returns contents of map11 as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function edit4_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit4 (see GCBO)
+function map11_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to map11 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -182,18 +182,18 @@ end
 
 
 
-function edit5_Callback(hObject, eventdata, handles)
-% hObject    handle to edit5 (see GCBO)
+function map14_Callback(hObject, eventdata, handles)
+% hObject    handle to map14 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit5 as text
-%        str2double(get(hObject,'String')) returns contents of edit5 as a double
+% Hints: get(hObject,'String') returns contents of map14 as text
+%        str2double(get(hObject,'String')) returns contents of map14 as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function edit5_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit5 (see GCBO)
+function map14_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to map14 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -205,18 +205,18 @@ end
 
 
 
-function edit6_Callback(hObject, eventdata, handles)
-% hObject    handle to edit6 (see GCBO)
+function map23_Callback(hObject, eventdata, handles)
+% hObject    handle to map23 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit6 as text
-%        str2double(get(hObject,'String')) returns contents of edit6 as a double
+% Hints: get(hObject,'String') returns contents of map23 as text
+%        str2double(get(hObject,'String')) returns contents of map23 as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function edit6_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit6 (see GCBO)
+function map23_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to map23 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -228,18 +228,18 @@ end
 
 
 
-function edit7_Callback(hObject, eventdata, handles)
-% hObject    handle to edit7 (see GCBO)
+function map22_Callback(hObject, eventdata, handles)
+% hObject    handle to map22 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit7 as text
-%        str2double(get(hObject,'String')) returns contents of edit7 as a double
+% Hints: get(hObject,'String') returns contents of map22 as text
+%        str2double(get(hObject,'String')) returns contents of map22 as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function edit7_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit7 (see GCBO)
+function map22_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to map22 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -251,18 +251,18 @@ end
 
 
 
-function edit8_Callback(hObject, eventdata, handles)
-% hObject    handle to edit8 (see GCBO)
+function map21_Callback(hObject, eventdata, handles)
+% hObject    handle to map21 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit8 as text
-%        str2double(get(hObject,'String')) returns contents of edit8 as a double
+% Hints: get(hObject,'String') returns contents of map21 as text
+%        str2double(get(hObject,'String')) returns contents of map21 as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function edit8_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit8 (see GCBO)
+function map21_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to map21 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -274,18 +274,18 @@ end
 
 
 
-function edit9_Callback(hObject, eventdata, handles)
-% hObject    handle to edit9 (see GCBO)
+function map24_Callback(hObject, eventdata, handles)
+% hObject    handle to map24 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit9 as text
-%        str2double(get(hObject,'String')) returns contents of edit9 as a double
+% Hints: get(hObject,'String') returns contents of map24 as text
+%        str2double(get(hObject,'String')) returns contents of map24 as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function edit9_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit9 (see GCBO)
+function map24_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to map24 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -297,18 +297,18 @@ end
 
 
 
-function edit10_Callback(hObject, eventdata, handles)
-% hObject    handle to edit10 (see GCBO)
+function map33_Callback(hObject, eventdata, handles)
+% hObject    handle to map33 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit10 as text
-%        str2double(get(hObject,'String')) returns contents of edit10 as a double
+% Hints: get(hObject,'String') returns contents of map33 as text
+%        str2double(get(hObject,'String')) returns contents of map33 as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function edit10_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit10 (see GCBO)
+function map33_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to map33 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -320,18 +320,18 @@ end
 
 
 
-function edit11_Callback(hObject, eventdata, handles)
-% hObject    handle to edit11 (see GCBO)
+function map32_Callback(hObject, eventdata, handles)
+% hObject    handle to map32 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit11 as text
-%        str2double(get(hObject,'String')) returns contents of edit11 as a double
+% Hints: get(hObject,'String') returns contents of map32 as text
+%        str2double(get(hObject,'String')) returns contents of map32 as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function edit11_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit11 (see GCBO)
+function map32_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to map32 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -343,18 +343,18 @@ end
 
 
 
-function edit12_Callback(hObject, eventdata, handles)
-% hObject    handle to edit12 (see GCBO)
+function map31_Callback(hObject, eventdata, handles)
+% hObject    handle to map31 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit12 as text
-%        str2double(get(hObject,'String')) returns contents of edit12 as a double
+% Hints: get(hObject,'String') returns contents of map31 as text
+%        str2double(get(hObject,'String')) returns contents of map31 as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function edit12_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit12 (see GCBO)
+function map31_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to map31 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -366,18 +366,18 @@ end
 
 
 
-function edit13_Callback(hObject, eventdata, handles)
-% hObject    handle to edit13 (see GCBO)
+function map34_Callback(hObject, eventdata, handles)
+% hObject    handle to map34 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit13 as text
-%        str2double(get(hObject,'String')) returns contents of edit13 as a double
+% Hints: get(hObject,'String') returns contents of map34 as text
+%        str2double(get(hObject,'String')) returns contents of map34 as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function edit13_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit13 (see GCBO)
+function map34_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to map34 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -389,18 +389,18 @@ end
 
 
 
-function edit14_Callback(hObject, eventdata, handles)
-% hObject    handle to edit14 (see GCBO)
+function map43_Callback(hObject, eventdata, handles)
+% hObject    handle to map43 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit14 as text
-%        str2double(get(hObject,'String')) returns contents of edit14 as a double
+% Hints: get(hObject,'String') returns contents of map43 as text
+%        str2double(get(hObject,'String')) returns contents of map43 as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function edit14_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit14 (see GCBO)
+function map43_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to map43 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -412,18 +412,18 @@ end
 
 
 
-function edit15_Callback(hObject, eventdata, handles)
-% hObject    handle to edit15 (see GCBO)
+function map42_Callback(hObject, eventdata, handles)
+% hObject    handle to map42 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit15 as text
-%        str2double(get(hObject,'String')) returns contents of edit15 as a double
+% Hints: get(hObject,'String') returns contents of map42 as text
+%        str2double(get(hObject,'String')) returns contents of map42 as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function edit15_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit15 (see GCBO)
+function map42_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to map42 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -435,18 +435,18 @@ end
 
 
 
-function edit16_Callback(hObject, eventdata, handles)
-% hObject    handle to edit16 (see GCBO)
+function map41_Callback(hObject, eventdata, handles)
+% hObject    handle to map41 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit16 as text
-%        str2double(get(hObject,'String')) returns contents of edit16 as a double
+% Hints: get(hObject,'String') returns contents of map41 as text
+%        str2double(get(hObject,'String')) returns contents of map41 as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function edit16_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit16 (see GCBO)
+function map41_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to map41 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -458,18 +458,147 @@ end
 
 
 
-function edit17_Callback(hObject, eventdata, handles)
-% hObject    handle to edit17 (see GCBO)
+function map44_Callback(hObject, eventdata, handles)
+% hObject    handle to map44 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit17 as text
-%        str2double(get(hObject,'String')) returns contents of edit17 as a double
+% Hints: get(hObject,'String') returns contents of map44 as text
+%        str2double(get(hObject,'String')) returns contents of map44 as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function edit17_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit17 (see GCBO)
+function map44_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to map44 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in mapSend.
+function mapSend_Callback(hObject, eventdata, handles)
+% hObject    handle to mapSend (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in refresh.
+function refresh_Callback(hObject, eventdata, handles)
+% hObject    handle to refresh (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+
+function PATH_Callback(hObject, eventdata, handles)
+% hObject    handle to PATH (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of PATH as text
+%        str2double(get(hObject,'String')) returns contents of PATH as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function PATH_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to PATH (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function goalY_Callback(hObject, eventdata, handles)
+% hObject    handle to goalY (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of goalY as text
+%        str2double(get(hObject,'String')) returns contents of goalY as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function goalY_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to goalY (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function goalX_Callback(hObject, eventdata, handles)
+% hObject    handle to goalX (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of goalX as text
+%        str2double(get(hObject,'String')) returns contents of goalX as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function goalX_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to goalX (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function posX_Callback(hObject, eventdata, handles)
+% hObject    handle to posX (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of posX as text
+%        str2double(get(hObject,'String')) returns contents of posX as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function posX_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to posX (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function posY_Callback(hObject, eventdata, handles)
+% hObject    handle to posY (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of posY as text
+%        str2double(get(hObject,'String')) returns contents of posY as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function posY_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to posY (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
