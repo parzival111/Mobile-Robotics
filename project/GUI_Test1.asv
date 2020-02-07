@@ -486,8 +486,7 @@ function mapSend_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 openArduino();
-sendMap();
-closeArduino();
+x = get(
 
 
 % --- Executes on button press in refreshMap.
@@ -649,24 +648,7 @@ function closeArduino()
 fclose(s);
 
 function sendMap()
-openArduino();
-fprintf(str2dbl(handle.map11,'String'));
-fprintf(str2dbl(handle.map12,'String'));
-fprintf(str2dbl(handle.map13,'String'));
-fprintf(str2dbl(handle.map14,'String'));
-fprintf(str2dbl(handle.map21,'String'));
-fprintf(str2dbl(handle.map22,'String'));
-fprintf(str2dbl(handle.map23,'String'));
-fprintf(str2dbl(handle.map24,'String'));
-fprintf(str2dbl(handle.map31,'String'));
-fprintf(str2dbl(handle.map32,'String'));
-fprintf(str2dbl(handle.map33,'String'));
-fprintf(str2dbl(handle.map34,'String'));
-fprintf(str2dbl(handle.map41,'String'));
-fprintf(str2dbl(handle.map42,'String'));
-fprintf(str2dbl(handle.map43,'String'));
-fprintf(str2dbl(handle.map44,'String'));
-closeArduino();
+serial.println()
 
 
 

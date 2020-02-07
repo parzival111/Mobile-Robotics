@@ -1,0 +1,8 @@
+Serial Communications:
+
+Ping IR:	81	(Single Number, Response of 4 digits, FRBL)
+Ping Map:	82	(Single Number, Response of 16 digits)
+Send Path:	96	(n+1 length number, 1 = right | 2 = left | 3 = straight)
+Send Pos:	97	(3 length number, no response)
+Send Goal:	98	(3 length number, no response)
+Send Map:	99	(17 length number, no response)
