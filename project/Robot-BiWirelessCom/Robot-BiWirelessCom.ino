@@ -61,19 +61,10 @@ void setup() {
   radio.setChannel(team_channel);//set the transmit and receive channels to avoid interference
   if (transmit) {
     radio.openWritingPipe(pipe);//open up writing pipe
-    //radio.openWritingPipe(addresses[1]);//open reading pipe
-    //radio.openReadingPipe(1, addresses[0]);//open reading pipe
-    Serial.println("***********************************");
-    Serial.println("....Starting nRF24L01 Transmit.....");
-    Serial.println("***********************************");
   } else {
     radio.openReadingPipe(1, pipe);//open up reading pipe
     radio.startListening();;//start listening for data;
-    //radio.openReadingPipe(1, addresses[1]);//open up reading pipe
-    //radio.openWritingPipe(addresses[0]);//open writing pipe
-    Serial.println("***********************************");
-    Serial.println("....Starting nRF24L01 Receive.....");
-    Serial.println("***********************************");
+
   }
 }
 
@@ -91,13 +82,12 @@ void loop() {
     while (radio.available()) {
       radio.read(&data, sizeof(data));
       if (data[0] > 0) {
-        dataIndex++;
-        memData[dataIndex] = data[0];
+        Serial.println(data[0]);
       }
     }//end while
   }
 
-
+/*
   // last digit 99 means we just recieved a matrix of values
   if (memData[dataIndex] == 99) {
     //Print an error if we recieved the wrong length of data
@@ -115,10 +105,7 @@ void loop() {
     }
     memset(memData, 0, 24);
     dataIndex = 0;
-  }
-
-
-
+  }*/
 
 }//end of loop
 
@@ -126,20 +113,5 @@ void readSerial() {
   if (Serial.available() > 0) {
     data[0] = Serial.parseInt();
     Serial.println(data[0]);
-  }
-}
-
-void printMap() {
-  for (int i = 0; i < 4; i++) {
-    for (int j = 0; j < 4; j++) {
-      if (j == 0) {
-        Serial.print("\t");
-      }
-      Serial.print(mapDat[i][j]);
-      if (j < 3) {
-        Serial.print("\t");
-      }
-    }
-    Serial.print("\n");
   }
 }
