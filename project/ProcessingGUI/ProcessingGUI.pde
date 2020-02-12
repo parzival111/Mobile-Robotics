@@ -9,6 +9,7 @@ Textfield m11, m12, m13, m14, m21, m22, m23, m24, m31, m32, m33, m34, m41, m42, 
 boolean sent = false;
 int[] data = new int[22];
 int dataIndex = 0;
+String[] outputData = new String[22];
 
 void setup() {
 
@@ -30,66 +31,82 @@ void setup() {
   m11 = cp5.addTextfield("m11")
     .setPosition(20, 80)
     .setSize(40, 40)
+    .setFont(font)
     ;  
   m12 = cp5.addTextfield("m12")
     .setPosition(60, 80)
     .setSize(40, 40)
+    .setFont(font)
     ;  
   m13 = cp5.addTextfield("m13")
     .setPosition(100, 80)
     .setSize(40, 40)
+    .setFont(font)
     ;  
   m14 = cp5.addTextfield("m14")
     .setPosition(140, 80)
     .setSize(40, 40)
+    .setFont(font)
     ;
   m21 = cp5.addTextfield("m21")
     .setPosition(20, 120)
     .setSize(40, 40)
+    .setFont(font)
     ;  
   m22 = cp5.addTextfield("m22")
     .setPosition(60, 120)
     .setSize(40, 40)
+    .setFont(font)
     ;  
   m23 = cp5.addTextfield("m23")
     .setPosition(100, 120)
     .setSize(40, 40)
+    .setFont(font)
     ;  
   m24 = cp5.addTextfield("m24")
     .setPosition(140, 120)
     .setSize(40, 40)
+    .setFont(font)
     ;   
   m31 = cp5.addTextfield("m31")
     .setPosition(20, 160)
     .setSize(40, 40)
+    .setFont(font)
     ;  
   m32 = cp5.addTextfield("m32")
     .setPosition(60, 160)
     .setSize(40, 40)
+    .setFont(font)
     ;  
   m33 = cp5.addTextfield("m33")
     .setPosition(100, 160)
     .setSize(40, 40)
+    .setFont(font)
     ;  
   m34 = cp5.addTextfield("m34")
     .setPosition(140, 160)
     .setSize(40, 40)
+    .setFont(font)
     ;   
   m41 = cp5.addTextfield("m41")
     .setPosition(20, 200)
     .setSize(40, 40)
+    .setFont(font)
     ;  
   m42 = cp5.addTextfield("m42")
     .setPosition(60, 200)
     .setSize(40, 40)
+    .setFont(font)
     ;  
   m43 = cp5.addTextfield("m43")
     .setPosition(100, 200)
     .setSize(40, 40)
+    .setFont(font)
     ;  
   m44 = cp5.addTextfield("m44")
     .setPosition(140, 200)
     .setSize(40, 40)
+    .setFont(font)
     ;  
   path = cp5.addTextfield("path")
     .setPosition(200, 80)
@@ -119,22 +136,22 @@ void setup() {
   irF = cp5.addTextfield("irF")
     .setPosition(120, 260)
     .setSize(60, 60)
-    .setFont(font2)
+    .setFont(font)
     ;  
   irR = cp5.addTextfield("irR")
     .setPosition(180, 320)
     .setSize(60, 60)
-    .setFont(font2)
+    .setFont(font)
     ;  
   irB = cp5.addTextfield("irB")
     .setPosition(120, 380)
     .setSize(60, 60)
-    .setFont(font2)
+    .setFont(font)
     ;  
   irL = cp5.addTextfield("irL")
     .setPosition(60, 320)
     .setSize(60, 60)
-    .setFont(font2)
+    .setFont(font)
     ;
 
   m11.getCaptionLabel().setVisible(false);
@@ -205,34 +222,35 @@ void SendData() {
 
 void ReadData() {
   while (port.available() > 0) {
-    data[dataIndex] = port.read();
-    if (data[dataIndex] != 13 && data[dataIndex] != 10) {
+    outputData[dataIndex] = port.readStringUntil('\n'); 
+    println(outputData[dataIndex] + " | " + dataIndex);
+    if (outputData[dataIndex] != null) {
       dataIndex++;
     }
   }
 }
 
 void WriteData() {
-  m11.setText(str(char(data[0])));
-  m12.setText(str(char(data[1])));
-  m13.setText(str(char(data[2])));
-  m14.setText(str(char(data[3])));
-  m21.setText(str(char(data[4])));
-  m22.setText(str(char(data[5])));
-  m23.setText(str(char(data[6])));
-  m24.setText(str(char(data[7])));
-  m31.setText(str(char(data[8])));
-  m32.setText(str(char(data[9])));
-  m33.setText(str(char(data[10])));
-  m34.setText(str(char(data[11])));
-  m41.setText(str(char(data[12])));
-  m42.setText(str(char(data[13])));
-  m43.setText(str(char(data[14])));
-  m44.setText(str(char(data[15])));
-  irF.setText(str(char(data[16])));
-  irR.setText(str(char(data[17])));
-  irB.setText(str(char(data[18])));
-  irL.setText(str(char(data[19])));
+  m11.setText(outputData[0]);
+  m12.setText(outputData[1]);
+  m13.setText(outputData[2]);
+  m14.setText(outputData[3]);
+  m21.setText(outputData[4]);
+  m22.setText(outputData[5]);
+  m23.setText(outputData[6]);
+  m24.setText(outputData[7]);
+  m31.setText(outputData[8]);
+  m32.setText(outputData[9]);
+  m33.setText(outputData[10]);
+  m34.setText(outputData[11]);
+  m41.setText(outputData[12]);
+  m42.setText(outputData[13]);
+  m43.setText(outputData[14]);
+  m44.setText(outputData[15]);
+  irF.setText(outputData[16]);
+  irR.setText(outputData[17]);
+  irB.setText(outputData[18]);
+  irL.setText(outputData[19]);
   dataIndex = 0;
-  java.util.Arrays.fill(data, 0);
+  java.util.Arrays.fill(outputData, "");
 }
