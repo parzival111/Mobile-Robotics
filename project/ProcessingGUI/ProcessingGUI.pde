@@ -165,7 +165,7 @@ void draw() {  // loop
   if (sent) {
     ReadData();
   }
-  if(dataIndex > 19){
+  if (dataIndex > 19) {
     WriteData();
   }
 }
@@ -206,7 +206,9 @@ void SendData() {
 void ReadData() {
   while (port.available() > 0) {
     data[dataIndex] = port.read();
-    dataIndex++;
+    if (data[dataIndex] != 13 && data[dataIndex] != 10) {
+      dataIndex++;
+    }
   }
 }
 
@@ -232,5 +234,5 @@ void WriteData() {
   irB.setText(str(char(data[18])));
   irL.setText(str(char(data[19])));
   dataIndex = 0;
-  java.util.Arrays.fill(data,0);
+  java.util.Arrays.fill(data, 0);
 }
