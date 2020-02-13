@@ -41,7 +41,7 @@
 #define baud_rate 9600
 
 //variables
-boolean transmit = true;              //set variable to send or receive data (use same code for both devices but change variable)
+boolean transmit = false;              //set variable to send or receive data (use same code for both devices but change variable)
 RF24 radio(CE_PIN, CSN_PIN);          //create instance of radio object
 #define team_channel 123              //set communication channel
 
@@ -93,6 +93,7 @@ void loop() {
       if (data[0] > 0) {
         dataIndex++;
         memData[dataIndex] = data[0];
+        Serial.println(data[0]);
       }
     }//end while
   }

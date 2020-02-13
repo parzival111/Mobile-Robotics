@@ -71,9 +71,9 @@ void setup() {
     radio.startListening();;//start listening for data;
     //radio.openReadingPipe(1, addresses[1]);//open up reading pipe
     //radio.openWritingPipe(addresses[0]);//open writing pipe
-    Serial.println("***********************************");
-    Serial.println("....Starting nRF24L01 Receive.....");
-    Serial.println("***********************************");
+    //Serial.println("***********************************");
+    //Serial.println("....Starting nRF24L01 Receive.....");
+    //Serial.println("***********************************");
   }
 }
 
@@ -91,6 +91,7 @@ void loop() {
     while (radio.available()) {
       radio.read(&data, sizeof(data));
       if (data[0] > 0) {
+        Serial.println(data[0]);
         dataIndex++;
         memData[dataIndex] = data[0];
       }
@@ -99,7 +100,7 @@ void loop() {
 
 
   // last digit 99 means we just recieved a matrix of values
-  if (memData[dataIndex] == 99) {
+  /*if (memData[dataIndex] == 99) {
     //Print an error if we recieved the wrong length of data
     if (dataIndex != 17 || memData[0] != 0) {
       Serial.println("map matrix formatted incorrectly");
@@ -115,7 +116,7 @@ void loop() {
     }
     memset(memData, 0, 24);
     dataIndex = 0;
-  }
+  }*/
 
 
 
