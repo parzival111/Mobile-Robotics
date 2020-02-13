@@ -192,7 +192,7 @@ void draw() {  // loop
 void SendData() {
   if (!sent) {
     port.write(path.getText() + "\n");
-    port.write(98 + "\n");
+    port.write(96 + "\n");
     port.write(posX.getText() + "\n");
     port.write(posY.getText() + "\n");
     port.write(97 + "\n");
@@ -216,6 +216,7 @@ void SendData() {
     port.write(m43.getText() + "\n");
     port.write(m44.getText() + "\n");
     port.write(99 + "\n");
+    port.write(100 + "/n");
     sent = true;
   }
 }

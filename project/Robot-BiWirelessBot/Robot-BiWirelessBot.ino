@@ -48,12 +48,15 @@ RF24 radio(CE_PIN, CSN_PIN);          //create instance of radio object
 const uint64_t pipe = 0xE8E8F0F0E1LL;   //define the radio transmit pipe
 byte addresses[][6] = {"1Node", "2Node"};//unique address between transmitter and receiver
 uint8_t data[1];                        //variable to hold transmit data
-uint8_t memData[24];                    //variable to hold left over data
+uint8_t memData[36];                    //variable to hold data
 uint8_t incoming[1];                    //variable to hold receive data
 uint8_t state[] = {0, 0};               //variable to hold receive data position
 uint8_t mapDat[4][4];                   //variable to hold receive data MAP
+uint8_t path[8];                        //variable to hold path
+uint8_t pos[2];                         //variable to hold start positon
+uint8_t goal[2];                        //variable to hold goal
 uint8_t lastSend;                       // Store last send time
-int dataIndex = 0;                      //index of last data recieved
+int dataIndex = -1;                     //index of last data recieved
 
 void setup() {
   Serial.begin(baud_rate);//start serial communication
@@ -96,19 +99,77 @@ void loop() {
         Serial.println(data[0]);
       }
     }//end while
-  }
 
-  
-  if (memData[dataIndex] == 99) {
-    int i = 0;
-    Serial.println("Data: ");
-    while (memData[i] != 99) {
-      Serial.println(memData[i]);
-      i++;
+
+    if (memData[dataIndex] == 100) {  //data sending is complete
+      int i1 = 0, i2 = 0;   //indeces representing the beginning and end of important data streams
+
+      Serial.println("Parsing Data:");
+
+      // Check for path data
+      for (int i = i1; i < dataIndex; i++) {
+        if (memData[i] == 96) { // we found the end of the path data
+          i2 = i;
+        }
+      }
+      for (int i = i1; i <= i2; i++) { // write path data
+        path[i] = memData[i];
+      }
+      i1 = i2 + 1;  // update indeces
+
+      for (int i = i1; i < dataIndex; i++) {
+        if (memData[i] == 97) { // we found the end of the position data
+          i2 = i;
+        }
+      }
+      if (i2 == i1 + 2) {
+        pos[1] = memData[i1];
+        pos[2] = memData[i1 + 1];
+        Serial.print("Pos: ");
+        Serial.print(pos[1]);
+        Serial.print(" | ");
+        Serial.println(pos[2]);
+      }
+      i1 = i2 + 1; // update indeces
+
+      for (int i = i1; i < dataIndex; i++) {
+        if (memData[i] == 98) { // we found the end of the goal data
+          i2 = i;
+        }
+      }
+      if (i2 == i1 + 2) {
+        goal[1] = memData[i1];
+        goal[2] = memData[i1 + 1];
+        Serial.print("Goal: ");
+        Serial.print(goal[1]);
+        Serial.print(" | ");
+        Serial.println(goal[2]);
+      }
+      i1 = i2 + 1; // update indeces
+
+      for (int i = i1; i < dataIndex; i++) {
+        if (memData[i] == 99) { // we found the end of the goal data
+          i2 = i;
+        }
+        if (i2 == i1 + 16) {
+          for (int j = 0; j < 4; j++) {
+            mapDat[j][1] = memData[i1 + j * 4];
+            mapDat[j][2] = memData[i1 + j * 4 + 1];
+            mapDat[j][3] = memData[i1 + j * 4 + 2];
+            mapDat[j][4] = memData[i1 + j * 4 + 3];
+            Serial.print("Map: ");
+            Serial.print(mapDat[j][1]);
+            Serial.print(" | ");
+            Serial.print(mapDat[j][2]);
+            Serial.print(" | ");
+            Serial.print(mapDat[j][3]);
+            Serial.print(" | ");
+            Serial.println(mapDat[j][4]);
+          }
+        }
+      }
+      transmit = true;
     }
-    Serial.println("fin.");
-    memset(memData, 0, 24);
-    dataIndex = 0;
   }
 
 }//end of loop

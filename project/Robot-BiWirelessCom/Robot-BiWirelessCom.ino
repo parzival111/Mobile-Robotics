@@ -41,7 +41,7 @@
 #define baud_rate 9600
 
 //variables
-boolean transmit = false;             //set variable to send or receive data (use same code for both devices but change variable)
+boolean transmit = true;             //set variable to send or receive data (use same code for both devices but change variable)
 RF24 radio(CE_PIN, CSN_PIN);          //create instance of radio object
 #define team_channel 123              //set communication channel
 
@@ -59,33 +59,16 @@ void setup() {
   Serial.begin(baud_rate);//start serial communication
   radio.begin();//start radio
   radio.setChannel(team_channel);//set the transmit and receive channels to avoid interference
-  if (transmit) {
-    radio.openWritingPipe(pipe);//open up writing pipe
-    //radio.openWritingPipe(addresses[1]);//open reading pipe
-    //radio.openReadingPipe(1, addresses[0]);//open reading pipe
-    Serial.println("***********************************");
-    Serial.println("....Starting nRF24L01 Transmit.....");
-    Serial.println("***********************************");
-  } else {
-    radio.openReadingPipe(1, pipe);//open up reading pipe
-    radio.startListening();;//start listening for data;
-    //radio.openReadingPipe(1, addresses[1]);//open up reading pipe
-    //radio.openWritingPipe(addresses[0]);//open writing pipe
-    //Serial.println("***********************************");
-    //Serial.println("....Starting nRF24L01 Receive.....");
-    //Serial.println("***********************************");
-  }
+  radio.openWritingPipe(pipe);//open up writing pipe
 }
 
 void loop() {
   if (transmit) {
-    ////// Use this code to test sending with the serial port
     readSerial();
     if (data[0] > 0) {
       radio.write(data, sizeof(data));
     }
   }
-
   else if (!transmit) {
     /// Use this code to receive from the laptop or the robot
     while (radio.available()) {
@@ -116,7 +99,7 @@ void loop() {
     }
     memset(memData, 0, 24);
     dataIndex = 0;
-  }*/
+    }*/
 
 
 
