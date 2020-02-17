@@ -47,13 +47,13 @@ RF24 radio(CE_PIN, CSN_PIN);          //create instance of radio object
 
 const uint64_t pipe = 0xE8E8F0F0E1LL;   //define the radio transmit pipe
 byte addresses[][6] = {"1Node", "2Node"};//unique address between transmitter and receiver
-uint8_t data[1];                        //variable to hold transmit data
+uint8_t data[32];                        //variable to hold transmit data
 uint8_t memData[24];                    //variable to hold left over data
 uint8_t incoming[1];                    //variable to hold receive data
 uint8_t state[] = {0, 0};               //variable to hold receive data position
 uint8_t mapDat[4][4];                   //variable to hold receive data MAP
 uint8_t lastSend;                       // Store last send time]
-int dataIndex = 0;                      //index of last data
+int dataIndex = -1;                      //index of last data
 
 void setup() {
   Serial.begin(baud_rate);//start serial communication
@@ -68,61 +68,57 @@ void loop() {
     if (data[0] > 0) {
       radio.write(data, sizeof(data));
     }
+    if (data[0] == 100) {
+      transmit = false;
+      radio.openReadingPipe(1, pipe);//open up reading pipe
+      radio.startListening();;//start listening for data;
+      Serial.println("Data Is Sent");
+    }
   }
   else if (!transmit) {
     /// Use this code to receive from the laptop or the robot
+    dataIndex = -1;
     while (radio.available()) {
       radio.read(&data, sizeof(data));
-      if (data[0] > 0) {
-        Serial.println(data[0]);
+      /*if (data[0] > 0) {
         dataIndex++;
         memData[dataIndex] = data[0];
-      }
+        Serial.println(memData[dataIndex]);
+      }*/
     }//end while
-  }
 
+    // last digit 100 means we just recieved a group of values
+    if (memData[dataIndex] == 100) {
+      int i1 = 0, i2 = 0;
 
-  // last digit 99 means we just recieved a matrix of values
-  /*if (memData[dataIndex] == 99) {
-    //Print an error if we recieved the wrong length of data
-    if (dataIndex != 17 || memData[0] != 0) {
-      Serial.println("map matrix formatted incorrectly");
-    }
-    else {
+      for (int i = i1; i < dataIndex; i++) {
+        if (memData[i] == 99) { // we found the end of the goal data
+          i2 = i;
+        }
+      }
+
       for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
           mapDat[i][j] = memData[4 * i + j + 1];
         }
       }
       printMap();
-      Serial.println("\t\tMap Recieved");
+      memset(memData, 0, 24);
+      dataIndex = 0;
     }
-    memset(memData, 0, 24);
-    dataIndex = 0;
-    }*/
-
-
-
-
+  }
 }//end of loop
 
 void readSerial() {
   if (Serial.available() > 0) {
     data[0] = Serial.parseInt();
-    Serial.println(data[0]);
   }
 }
 
 void printMap() {
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
-      if (j == 0) {
-        Serial.print("\t");
-      }
       Serial.print(mapDat[i][j]);
-      if (j < 3) {
-        Serial.print("\t");
-      }
     }
     Serial.print("\n");
   }

@@ -7,9 +7,9 @@ ControlP5 cp5;  // create
 PFont font, font2;
 Textfield m11, m12, m13, m14, m21, m22, m23, m24, m31, m32, m33, m34, m41, m42, m43, m44, path, posX, posY, goalX, goalY, irF, irR, irB, irL;
 boolean sent = false;
-int[] data = new int[22];
+int[] data = new int[32];
 int dataIndex = 0;
-String[] outputData = new String[22];
+String[] outputData = new String[32];
 
 void setup() {
 
@@ -22,6 +22,10 @@ void setup() {
   cp5 = new ControlP5(this);
   font = createFont("calibri light", 20);
   font2 = createFont("calibri light", 12);
+
+  for(int i = 0; i < 32; i++){
+    outputData[i] = "";
+  }
 
   cp5.addButton("SendData")
     .setPosition(80, 30)
@@ -191,14 +195,10 @@ void draw() {  // loop
 
 void SendData() {
   if (!sent) {
-    port.write(path.getText() + "\n");
-    port.write(96 + "\n");
     port.write(posX.getText() + "\n");
     port.write(posY.getText() + "\n");
-    port.write(97 + "\n");
     port.write(goalX.getText() + "\n");
     port.write(goalY.getText() + "\n");
-    port.write(98 + "\n");
     port.write(m11.getText() + "\n");
     port.write(m12.getText() + "\n");
     port.write(m13.getText() + "\n");
@@ -215,8 +215,9 @@ void SendData() {
     port.write(m42.getText() + "\n");
     port.write(m43.getText() + "\n");
     port.write(m44.getText() + "\n");
-    port.write(99 + "\n");
+    port.write(path.getText() + "\n");
     port.write(100 + "/n");
+    println("data sent");
     sent = true;
   }
 }
@@ -224,34 +225,46 @@ void SendData() {
 void ReadData() {
   while (port.available() > 0) {
     outputData[dataIndex] = port.readStringUntil('\n'); 
-    println(outputData[dataIndex] + " | " + dataIndex);
     if (outputData[dataIndex] != null) {
-      dataIndex++;
+      println(outputData[dataIndex] + " | " + dataIndex);
+      if (outputData[dataIndex].contains("101")) {
+        println("101 found with " + outputData[dataIndex]);
+        outputData[0] = "";
+        dataIndex = 0;
+      }
+      else if (dataIndex == 23) {
+        WriteData();
+      } else {
+        dataIndex++;
+      }
     }
   }
 }
 
 void WriteData() {
-  m11.setText(outputData[0]);
-  m12.setText(outputData[1]);
-  m13.setText(outputData[2]);
-  m14.setText(outputData[3]);
-  m21.setText(outputData[4]);
-  m22.setText(outputData[5]);
-  m23.setText(outputData[6]);
-  m24.setText(outputData[7]);
-  m31.setText(outputData[8]);
-  m32.setText(outputData[9]);
-  m33.setText(outputData[10]);
-  m34.setText(outputData[11]);
-  m41.setText(outputData[12]);
-  m42.setText(outputData[13]);
-  m43.setText(outputData[14]);
-  m44.setText(outputData[15]);
-  irF.setText(outputData[16]);
-  irR.setText(outputData[17]);
-  irB.setText(outputData[18]);
-  irL.setText(outputData[19]);
+  posX.setText(outputData[0]);
+  posY.setText(outputData[1]);
+  goalX.setText(outputData[2]);
+  goalY.setText(outputData[3]);
+  m11.setText(outputData[4]);
+  m12.setText(outputData[5]);
+  m13.setText(outputData[6]);
+  m14.setText(outputData[7]);
+  m21.setText(outputData[8]);
+  m22.setText(outputData[9]);
+  m23.setText(outputData[10]);
+  m24.setText(outputData[11]);
+  m31.setText(outputData[12]);
+  m32.setText(outputData[13]);
+  m33.setText(outputData[14]);
+  m34.setText(outputData[15]);
+  m41.setText(outputData[16]);
+  m42.setText(outputData[17]);
+  m43.setText(outputData[18]);
+  m44.setText(outputData[19]);
+  irF.setText(outputData[20]);
+  irR.setText(outputData[21]);
+  irB.setText(outputData[22]);
+  irL.setText(outputData[23]);
   dataIndex = 0;
-  java.util.Arrays.fill(outputData, "");
 }
