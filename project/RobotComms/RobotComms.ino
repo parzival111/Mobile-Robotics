@@ -21,10 +21,10 @@
 #define cutoff 18             //cutoff for sensors
 
 //variables
-boolean transmit = false;             //Start off recieving data
 RF24 radio(CE_PIN, CSN_PIN);          //Create instance of radio object
 #define team_channel 123              //Set communication channel
 
+boolean transmit = false;             //Start off recieving data
 const uint64_t pipe = 0xE8E8F0F0E1LL;   //define the radio transmit pipe
 uint8_t data[32];                       //variable to hold data
 int dataIndex = 0;                      //variable for the index of the last data
@@ -32,7 +32,6 @@ uint8_t mapDat[4][4];                   //variable to hold receive data MAP
 uint8_t path[8];                        //variable to hold path
 uint8_t pos[2];                         //variable to hold start positon
 uint8_t goal[2];                        //variable to hold goal
-
 
 void setup() {
   Serial.begin(baud_rate);//start serial communication

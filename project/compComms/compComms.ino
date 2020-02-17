@@ -51,6 +51,7 @@ void loop() {
   }
   else if (transmit) {
     radio.write(data, sizeof(data));
+    Serial.println("Data Sent");
     transmit = false;
     radio.openReadingPipe(1, pipe);//open up reading pipe
     radio.startListening();;//start listening for data;
