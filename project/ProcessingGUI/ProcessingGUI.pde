@@ -23,7 +23,7 @@ void setup() {
   font = createFont("calibri light", 20);
   font2 = createFont("calibri light", 12);
 
-  for(int i = 0; i < 32; i++){
+  for (int i = 0; i < 32; i++) {
     outputData[i] = "";
   }
 
@@ -195,26 +195,45 @@ void draw() {  // loop
 
 void SendData() {
   if (!sent) {
-    port.write(posX.getText() + "\n");
-    port.write(posY.getText() + "\n");
-    port.write(goalX.getText() + "\n");
-    port.write(goalY.getText() + "\n");
-    port.write(m11.getText() + "\n");
-    port.write(m12.getText() + "\n");
-    port.write(m13.getText() + "\n");
-    port.write(m14.getText() + "\n");
-    port.write(m21.getText() + "\n");
-    port.write(m22.getText() + "\n");
-    port.write(m23.getText() + "\n");
-    port.write(m24.getText() + "\n");
-    port.write(m31.getText() + "\n");
-    port.write(m32.getText() + "\n");
-    port.write(m33.getText() + "\n");
-    port.write(m34.getText() + "\n");
-    port.write(m41.getText() + "\n");
-    port.write(m42.getText() + "\n");
-    port.write(m43.getText() + "\n");
-    port.write(m44.getText() + "\n");
+    if (posX.getText().equals("")) {
+      for (int i = 0; i < 2; i++) {
+        port.write(99 + "\n");
+      }
+    } else {
+      port.write(posX.getText() + "\n");
+      port.write(posY.getText() + "\n");
+    }
+    if (goalX.getText().equals("")) {
+      for (int i = 0; i < 2; i++) {
+        port.write(99 + "\n");
+      }
+    } else {
+      port.write(goalX.getText() + "\n");
+      port.write(goalY.getText() + "\n");
+    }
+    if (m11.getText().equals("")) {
+      println("No Map");
+      for (int i = 0; i < 16; i++) {
+        port.write(99 + "\n");
+      }
+    } else {
+      port.write(m11.getText() + "\n");
+      port.write(m12.getText() + "\n");
+      port.write(m13.getText() + "\n");
+      port.write(m14.getText() + "\n");
+      port.write(m21.getText() + "\n");
+      port.write(m22.getText() + "\n");
+      port.write(m23.getText() + "\n");
+      port.write(m24.getText() + "\n");
+      port.write(m31.getText() + "\n");
+      port.write(m32.getText() + "\n");
+      port.write(m33.getText() + "\n");
+      port.write(m34.getText() + "\n");
+      port.write(m41.getText() + "\n");
+      port.write(m42.getText() + "\n");
+      port.write(m43.getText() + "\n");
+      port.write(m44.getText() + "\n");
+    }
     port.write(path.getText() + "\n");
     port.write(100 + "/n");
     println("data sent");
@@ -226,15 +245,18 @@ void ReadData() {
   while (port.available() > 0) {
     outputData[dataIndex] = port.readStringUntil('\n'); 
     if (outputData[dataIndex] != null) {
-      println(outputData[dataIndex] + " | " + dataIndex);
-      if (outputData[dataIndex].contains("101")) {
-        println("101 found with " + outputData[dataIndex]);
+      //println(outputData[dataIndex] + " | " + dataIndex);
+      if (outputData[dataIndex].contains("111")) {
+        //println("101 found with " + outputData[dataIndex]);
         outputData[0] = "";
         dataIndex = 0;
       }
-      else if (dataIndex == 23) {
+      else if (outputData[dataIndex].contains("112")) {
+        println("Found 102");
         WriteData();
-      } else {
+        dataIndex = 0;
+      } 
+      else {
         dataIndex++;
       }
     }
@@ -242,6 +264,10 @@ void ReadData() {
 }
 
 void WriteData() {
+  for(int i = 0; i < 24; i++){
+    println(outputData[i] + " | " + i);
+  }
+  
   posX.setText(outputData[0]);
   posY.setText(outputData[1]);
   goalX.setText(outputData[2]);

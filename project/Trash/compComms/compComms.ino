@@ -19,13 +19,12 @@
 #define irR 3       //right IR
 #define cutoff 18   //cutoff for sensors
 
-RF24 radio(CE_PIN, CSN_PIN);          //Create instance of radio object
-#define team_channel 63               //Set communication channel
-
-
 //variables
 boolean transmit = true;              //Start off sending data
 boolean readData = true;              //read data from serial
+RF24 radio(CE_PIN, CSN_PIN);          //Create instance of radio object
+#define team_channel 123              //Set communication channel
+
 const uint64_t pipe = 0xE8E8F0F0E1LL;   //define the radio transmit pipe
 uint8_t data[32];                       //variable to hold data
 int dataIndex = 0;                      //variable for the index of the last data

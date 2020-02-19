@@ -83,7 +83,7 @@ uint8_t pos[2];                         //variable to hold start positon
 uint8_t goal[2];                        //variable to hold goal
 
 // states variables for the robot
-byte state = 1;                       //variable to tell what state the robot is in
+byte state = 0;                       //variable to tell what state the robot is in
 
 boolean isMoving = false;             //variable to keep track of non-continuous movement commands
 
@@ -148,6 +148,10 @@ void loop() {
     while (radio.available()) {
       //Serial.println("Recieved Data");
       radio.read(&data, sizeof(data));
+      for(int i = 0; i < sizeof(data); i++){
+        Serial.print(data[i]);
+        Serial.print(",");
+      }
       saveData();
       radio.stopListening();
       radio.openWritingPipe(pipe);//open up writing pipe
@@ -429,12 +433,28 @@ void saveData() {
   int index = 0;
   for (int i = dataIndex; i < i2; i++) {
     path[index] = data[i];
-    Serial.println(path[index]);
     index++;
   }
   recievedData = true;
+  decideFunction();
   startInterrupt();
 }
+
+void decideFunction(){
+  // if map is recieved:
+    // if position and goal are defined
+      // bushfire
+
+    // if no position or goal
+      // localization
+
+  // if path is recieved
+    // topographigal
+    
+  // if position is defined
+    // map making
+}
+
 
 void createMessage() {
   double irFront = readIRFront();
@@ -466,6 +486,8 @@ void createMessage() {
   data[dataIndex] = irBack;
   dataIndex++;
   data[dataIndex] = irLeft;
+  dataIndex++;
+  data[dataIndex] = 102;
 }
 
 void startInterrupt() {
